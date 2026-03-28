@@ -8,4 +8,5 @@ tsconfig.json
 package-lock.json
 .claude/**
 CLAUDE.md
+.mcp.json
 # node_modules will be handled automatically by vsce (it includes production dependencies only)
