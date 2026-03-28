@@ -1,9 +1,14 @@
 {
-  "name": "gdrive-vs-extension",
+  "name": "googledrive-vscode-extension",
   "displayName": "Google Drive for VS Code",
   "description": "Mount Google Drive as a native workspace folder in VS Code",
   "version": "0.1.0",
-  "publisher": "gdrive-extension",
+  "publisher": "tut1vog",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tut1vog/googledrive-vscode-extension"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -46,6 +51,7 @@
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.23.0",
     "typescript": "^5.3.3"
   }
 }
