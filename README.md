@@ -74,4 +74,4 @@ src/
 
 - Google Workspace documents (Docs, Sheets, Slides) are not shown in the file explorer since they cannot be downloaded as raw files
 - No real-time sync — changes made outside VS Code won't appear until you refresh
-- Google Drive allows duplicate file names in a folder; only the first match is used during path resolution
+- Google Drive allows duplicate file names in a folder; only the **first match** is used during path resolution
