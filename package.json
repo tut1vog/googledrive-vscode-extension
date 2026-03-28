@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "publisher": "tut1vog",
   "license": "MIT",
+  "icon": "images/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/tut1vog/googledrive-vscode-extension"
