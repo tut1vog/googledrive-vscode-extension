@@ -1,0 +1,6 @@
+out/
+node_modules/
+.vscode/
+*.vsix
+.env
+.mcp.json
