@@ -2,7 +2,7 @@
   "name": "googledrive-vscode-extension",
   "displayName": "Google Drive for VS Code",
   "description": "Mount Google Drive as a native workspace folder in VS Code",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "Tutivog",
   "license": "MIT",
   "icon": "images/icon.png",
