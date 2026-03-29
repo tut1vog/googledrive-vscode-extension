@@ -1,6 +1,6 @@
 .vscode/**
 .vscode-test/**
-out/test/**
+out/**
 src/**
 .gitignore
 .git/**
@@ -8,5 +8,6 @@ tsconfig.json
 package-lock.json
 .claude/**
 CLAUDE.md
+node_modules/**
+!dist/**
 .mcp.json
-# node_modules will be handled automatically by vsce (it includes production dependencies only)
