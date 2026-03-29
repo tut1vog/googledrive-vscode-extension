@@ -5,26 +5,28 @@ import { GoogleDriveFileSystemProvider } from './file-system-provider';
 import { pickDriveFolder } from './drive-picker';
 import { initLogger, log, logError, dispose as disposeLogger } from './logger';
 
-export function activate(context: vscode.ExtensionContext): void {
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
     const outputChannel = initLogger();
     log('Google Drive extension activating...');
 
     const authManager = new AuthManager(context);
     const fsProvider = new GoogleDriveFileSystemProvider();
 
+    // Restore previous session BEFORE registering the provider, so the
+    // drive client and root folder are ready when VS Code first queries it.
+    await restoreSession(context, authManager, fsProvider);
+
     // Register the file system provider for the gdrive:/ scheme
     const fsRegistration = vscode.workspace.registerFileSystemProvider('gdrive', fsProvider, {
         isCaseSensitive: true,
     });
-
-    // Try to restore a previous session on activation
-    restoreSession(authManager, fsProvider);
 
     // Command: Sign In
     const signInCmd = vscode.commands.registerCommand('gdrive.signIn', async () => {
         try {
             const client = await authManager.signIn();
             fsProvider.setDriveClient(new DriveClient(client));
+            fsProvider.refresh();
             vscode.window.showInformationMessage('Google Drive: Signed in successfully.');
         } catch (err) {
             logError('Sign in failed', err);
@@ -56,7 +58,7 @@ export function activate(context: vscode.ExtensionContext): void {
             return;
         }
 
-        mountDriveFolder(fsProvider, selection.id, selection.name);
+        await mountDriveFolder(context, fsProvider, selection.id, selection.name);
     });
 
     // Command: Open Drive Root (mounts My Drive directly)
@@ -66,7 +68,7 @@ export function activate(context: vscode.ExtensionContext): void {
             return;
         }
 
-        mountDriveFolder(fsProvider, 'root', 'My Drive');
+        await mountDriveFolder(context, fsProvider, 'root', 'My Drive');
     });
 
     context.subscriptions.push(
@@ -119,12 +121,19 @@ async function ensureAuthenticated(
     return driveClient;
 }
 
-function mountDriveFolder(
+async function mountDriveFolder(
+    context: vscode.ExtensionContext,
     fsProvider: GoogleDriveFileSystemProvider,
     folderId: string,
     folderName: string,
-): void {
+): Promise<void> {
     fsProvider.setRootFolder(folderId);
+
+    // Persist the mounted folder BEFORE updating workspace folders.
+    // updateWorkspaceFolders can trigger an extension host restart (e.g. when
+    // adding the first workspace folder), so the state must be saved first.
+    await context.globalState.update('gdrive.rootFolderId', folderId);
+    await context.globalState.update('gdrive.rootFolderName', folderName);
 
     const driveUri = vscode.Uri.parse('gdrive:/');
     const displayName = folderId === 'root' ? 'Google Drive' : `Google Drive - ${folderName}`;
@@ -146,10 +155,15 @@ function mountDriveFolder(
         );
     }
 
+    // The refresh() in setRootFolder fires before the workspace folder exists
+    // (no-op on first mount). Fire again now that the folder is added.
+    fsProvider.refresh();
+
     log(`Mounted folder ${folderId} (${folderName})`);
 }
 
 async function restoreSession(
+    context: vscode.ExtensionContext,
     authManager: AuthManager,
     fsProvider: GoogleDriveFileSystemProvider,
 ): Promise<void> {
@@ -157,7 +171,13 @@ async function restoreSession(
         const client = await authManager.getOAuth2Client();
         if (client?.credentials.access_token) {
             fsProvider.setDriveClient(new DriveClient(client));
-            log('Restored previous session');
+
+            // Restore the previously mounted folder (defaults to 'root').
+            // Always call setRootFolder so the refresh notification fires
+            // after the drive client is ready.
+            const savedFolderId = context.globalState.get<string>('gdrive.rootFolderId') ?? 'root';
+            fsProvider.setRootFolder(savedFolderId);
+            log(`Restored session with root folder: ${savedFolderId}`);
         }
     } catch (err) {
         logError('Failed to restore session', err);

@@ -87,6 +87,14 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
 
     setRootFolder(folderId: string): void {
         this.cache.setRootId(folderId);
+        this.refresh();
+    }
+
+    /** Fire a change event on the root to make VS Code re-read the directory. */
+    refresh(): void {
+        this._onDidChangeFile.fire([
+            { type: vscode.FileChangeType.Changed, uri: vscode.Uri.parse('gdrive:/') },
+        ]);
     }
 
     watch(_uri: vscode.Uri): vscode.Disposable {
@@ -143,7 +151,6 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
         const entries: [string, vscode.FileType][] = [];
         for (const child of children) {
             if (child.isGoogleDoc) {
-                // Skip Google Docs in directory listing to avoid confusion
                 continue;
             }
             entries.push([
