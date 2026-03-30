@@ -52,6 +52,18 @@ class PathCache {
         return this.dirListings.has(parentPath);
     }
 
+    /** Add a single child to an existing dir listing (avoids full re-list). */
+    addToDirListing(parentPath: string, child: DriveFileInfo): void {
+        const childPath = parentPath === '/' ? `/${child.name}` : `${parentPath}/${child.name}`;
+        this.setEntry(childPath, child);
+        this.dirListings.get(parentPath)?.add(child.name);
+    }
+
+    /** Remove a single child from an existing dir listing. */
+    removeFromDirListing(parentPath: string, childName: string): void {
+        this.dirListings.get(parentPath)?.delete(childName);
+    }
+
     invalidatePath(path: string): void {
         this.pathToId.delete(path);
         this.pathToInfo.delete(path);
@@ -60,6 +72,25 @@ class PathCache {
         // Invalidate parent dir listing
         const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
         this.dirListings.delete(parentPath);
+
+        // Invalidate all children (important after delete/rename so stale
+        // child entries don't cause ghost references or API errors).
+        const prefix = path === '/' ? '/' : path + '/';
+        for (const key of this.pathToId.keys()) {
+            if (key.startsWith(prefix)) {
+                this.pathToId.delete(key);
+            }
+        }
+        for (const key of this.pathToInfo.keys()) {
+            if (key.startsWith(prefix)) {
+                this.pathToInfo.delete(key);
+            }
+        }
+        for (const key of this.dirListings.keys()) {
+            if (key.startsWith(prefix)) {
+                this.dirListings.delete(key);
+            }
+        }
     }
 
     invalidateAll(): void {
@@ -198,6 +229,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
     ): Promise<void> {
         const client = this.requireClient();
         const path = normalizePath(uri.path);
+        log(`writeFile called: ${path} (${content.length} bytes, create=${options.create}, overwrite=${options.overwrite})`);
         const existingInfo = await this.resolvePathInfo(path);
 
         if (existingInfo) {
@@ -212,6 +244,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
             const openTime = this.fileOpenTimes.get(path);
             if (openTime !== undefined) {
                 const freshInfo = await client.getFileInfo(existingInfo.id);
+                log(`Conflict check for ${path}: remote mtime=${freshInfo.modifiedTime}, local openTime=${openTime}, diff=${freshInfo.modifiedTime - openTime}ms`);
                 if (freshInfo.modifiedTime > openTime) {
                     const remoteDate = new Date(freshInfo.modifiedTime).toLocaleString();
                     const choice = await vscode.window.showWarningMessage(
@@ -247,7 +280,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
             const fileName = path.substring(path.lastIndexOf('/') + 1);
             const newFile = await client.createFile(fileName, parentId, Buffer.from(content));
             this.cache.setEntry(path, newFile);
-            this.cache.invalidatePath(parentPath); // Invalidate parent listing
+            this.cache.addToDirListing(parentPath, newFile);
             this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Created, uri }]);
         }
     }
@@ -264,6 +297,9 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
         }
 
         await client.deleteFile(info.id);
+        const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
+        const fileName = path.substring(path.lastIndexOf('/') + 1);
+        this.cache.removeFromDirListing(parentPath, fileName);
         this.cache.invalidatePath(path);
         this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Deleted, uri }]);
     }
@@ -336,7 +372,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
         const folderName = path.substring(path.lastIndexOf('/') + 1);
         const folder = await client.createFolder(folderName, parentId);
         this.cache.setEntry(path, folder);
-        this.cache.invalidatePath(parentPath);
+        this.cache.addToDirListing(parentPath, folder);
         this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Created, uri }]);
     }
 
