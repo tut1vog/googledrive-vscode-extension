@@ -87,8 +87,17 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         await mountDriveFolder(context, fsProvider, 'root', 'My Drive');
     });
 
+    // Track save reasons so the file system provider can distinguish manual vs auto-save.
+    // On auto-save conflicts, the provider keeps the dirty dot instead of showing a dialog.
+    const saveReasonListener = vscode.workspace.onWillSaveTextDocument((e) => {
+        if (e.document.uri.scheme === 'gdrive') {
+            fsProvider.trackSaveReason(e.document.uri, e.reason);
+        }
+    });
+
     context.subscriptions.push(
         fsRegistration,
+        saveReasonListener,
         signInCmd,
         signOutCmd,
         openDriveCmd,

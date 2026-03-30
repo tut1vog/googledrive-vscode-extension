@@ -113,15 +113,31 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
     /** Tracks the modifiedTime of each file when it was last read (opened). path -> modifiedTime ms */
     private fileOpenTimes = new Map<string, number>();
 
+    /** Tracks files with known remote conflicts (remote modified since open). */
+    private conflictedFiles = new Set<string>();
+
+    /** Stores the save reason for the current writeFile call (set via onWillSaveTextDocument). */
+    private lastSaveReason = new Map<string, vscode.TextDocumentSaveReason>();
+
     private _onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
     readonly onDidChangeFile = this._onDidChangeFile.event;
 
     constructor() {}
 
+    /**
+     * Called from the onWillSaveTextDocument listener to record whether this
+     * save was triggered manually (Ctrl+S) or by auto-save.
+     */
+    trackSaveReason(uri: vscode.Uri, reason: vscode.TextDocumentSaveReason): void {
+        const path = normalizePath(uri.path);
+        this.lastSaveReason.set(path, reason);
+    }
+
     setDriveClient(client: DriveClient | undefined): void {
         this.driveClient = client;
         this.cache.invalidateAll();
         this.fileOpenTimes.clear();
+        this.conflictedFiles.clear();
     }
 
     setRootFolder(folderId: string): void {
@@ -241,6 +257,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
         // Fetch fresh modifiedTime to avoid stale cache causing false conflict warnings
         const freshInfo = await client.getFileInfo(info.id);
         this.fileOpenTimes.set(path, freshInfo.modifiedTime);
+        this.conflictedFiles.delete(path);
         return new Uint8Array(buffer);
     }
 
@@ -265,11 +282,33 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
             }
 
             // Check if the file was modified externally since we opened it
+            const saveReason = this.lastSaveReason.get(path);
+            this.lastSaveReason.delete(path);
+            const isManualSave = saveReason === vscode.TextDocumentSaveReason.Manual;
+
+            // If already known conflicted, skip the API call for auto-saves
+            if (this.conflictedFiles.has(path) && !isManualSave) {
+                log(`Auto-save skipped for conflicted file ${path} (remote was modified externally)`);
+                throw vscode.FileSystemError.NoPermissions(
+                    'File was modified externally. Use Ctrl+S / Cmd+S to resolve the conflict.',
+                );
+            }
+
             const openTime = this.fileOpenTimes.get(path);
             if (openTime !== undefined) {
                 const freshInfo = await client.getFileInfo(existingInfo.id);
                 log(`Conflict check for ${path}: remote mtime=${freshInfo.modifiedTime}, local openTime=${openTime}, diff=${freshInfo.modifiedTime - openTime}ms`);
                 if (freshInfo.modifiedTime > openTime) {
+                    if (!isManualSave) {
+                        // Auto-save: silently fail to keep the dirty dot on the tab
+                        this.conflictedFiles.add(path);
+                        log(`Auto-save blocked for ${path} (remote modified externally, waiting for manual save)`);
+                        throw vscode.FileSystemError.NoPermissions(
+                            'File was modified externally. Use Ctrl+S / Cmd+S to resolve the conflict.',
+                        );
+                    }
+
+                    // Manual save: show the conflict dialog
                     const remoteDate = new Date(freshInfo.modifiedTime).toLocaleString();
                     const choice = await vscode.window.showWarningMessage(
                         `"${freshInfo.name}" was modified externally (${remoteDate}). Overwrite remote changes?`,
@@ -281,6 +320,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
                         log(`Write cancelled by user for ${path} (external modification detected)`);
                         return;
                     }
+                    this.conflictedFiles.delete(path);
                 }
             }
 

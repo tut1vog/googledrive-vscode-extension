@@ -76,10 +76,12 @@ When saving a file, the extension checks whether the file was modified remotely 
 
 1. Records the file's `modifiedTime` when it is first read.
 2. On save, fetches the current `modifiedTime` from the Drive API.
-3. If the remote version is newer, shows a modal warning with the remote modification timestamp.
-4. The user can choose to **Overwrite** (push local changes) or **Cancel** (keep the remote version).
+3. If the remote version is newer:
+   - **Auto-save** (afterDelay / focusOut): The save is silently blocked. The tab retains its dirty dot (unsaved indicator) so the user can see the file has unresolved changes. No popup is shown. Subsequent auto-save attempts skip the API call entirely until the conflict is resolved.
+   - **Manual save** (Ctrl+S / Cmd+S): A modal warning dialog appears with the remote modification timestamp. The user can choose to **Overwrite** (push local changes) or **Cancel** (keep the remote version).
+4. Re-opening or reloading the file clears the conflict state.
 
-This prevents silent data loss when collaborating or editing from multiple devices.
+This prevents silent data loss when collaborating or editing from multiple devices, while avoiding disruptive popups during auto-save.
 
 ## Google Workspace Document Handling
 

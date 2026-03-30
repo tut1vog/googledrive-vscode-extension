@@ -83,11 +83,16 @@ VS Code Explorer opens a file
 ### File Write Flow (with conflict detection)
 ```
 User saves a file
+  → onWillSaveTextDocument records save reason (Manual / AfterDelay / FocusOut)
   → writeFile(uri, content, options)
   → Resolves path to existing DriveFileInfo
+  → If file is already known conflicted AND save is auto:
+      → Throws NoPermissions immediately (dirty dot stays, no API call)
   → If file was previously opened:
       → Fetches fresh modifiedTime from Drive API
-      → If remote is newer → shows modal warning, user can Overwrite or Cancel
+      → If remote is newer:
+          → Auto-save: marks file as conflicted, throws NoPermissions (dirty dot stays)
+          → Manual save (Ctrl+S): shows modal warning, user can Overwrite or Cancel
   → Calls DriveClient.writeFile(id, content)
   → Invalidates cache, fires Changed event
 ```
