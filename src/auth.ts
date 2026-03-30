@@ -180,6 +180,10 @@ export class AuthManager {
                 reject(new Error('No auth code received'));
             });
 
+            server.on('error', (err: Error) => {
+                reject(new Error(`Auth server failed to start: ${err.message}`));
+            });
+
             server.listen(REDIRECT_PORT, () => {
                 vscode.env.openExternal(vscode.Uri.parse(authUrl));
             });

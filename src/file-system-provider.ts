@@ -64,6 +64,10 @@ class PathCache {
         this.dirListings.get(parentPath)?.delete(childName);
     }
 
+    entries(): IterableIterator<[string, DriveFileInfo]> {
+        return this.pathToInfo.entries();
+    }
+
     invalidatePath(path: string): void {
         this.pathToId.delete(path);
         this.pathToInfo.delete(path);
@@ -114,9 +118,10 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
 
     constructor() {}
 
-    setDriveClient(client: DriveClient): void {
+    setDriveClient(client: DriveClient | undefined): void {
         this.driveClient = client;
         this.cache.invalidateAll();
+        this.fileOpenTimes.clear();
     }
 
     setRootFolder(folderId: string): void {
@@ -179,21 +184,38 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
             throw vscode.FileSystemError.FileNotFound(uri);
         }
 
-        const children = await client.listChildren(folderId);
-        this.cache.setDirListing(path, children);
+        // Use cached dir listing if available to avoid unnecessary API calls
+        if (!this.cache.hasDirListing(path)) {
+            const children = await client.listChildren(folderId);
+            this.cache.setDirListing(path, children);
+        }
 
+        return this.buildDirEntries(path);
+    }
+
+    private buildDirEntries(parentPath: string): [string, vscode.FileType][] {
         const entries: [string, vscode.FileType][] = [];
-        for (const child of children) {
-            if (child.isGoogleDoc) {
+        // Iterate cached entries for this directory
+        const prefix = parentPath === '/' ? '/' : parentPath + '/';
+        for (const [, info] of this.iterCachedChildren(prefix)) {
+            if (info.isGoogleDoc) {
                 continue;
             }
             entries.push([
-                child.name,
-                child.isFolder ? vscode.FileType.Directory : vscode.FileType.File,
+                info.name,
+                info.isFolder ? vscode.FileType.Directory : vscode.FileType.File,
             ]);
         }
-
         return entries;
+    }
+
+    private *iterCachedChildren(prefix: string): Iterable<[string, DriveFileInfo]> {
+        // Yield direct children only (paths that match prefix + name with no further slashes)
+        for (const [path, info] of this.cache.entries()) {
+            if (path.startsWith(prefix) && !path.substring(prefix.length).includes('/')) {
+                yield [path, info];
+            }
+        }
     }
 
     // --- Read File ---
@@ -216,7 +238,9 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
         }
 
         const buffer = await client.readFile(info.id);
-        this.fileOpenTimes.set(path, info.modifiedTime);
+        // Fetch fresh modifiedTime to avoid stale cache causing false conflict warnings
+        const freshInfo = await client.getFileInfo(info.id);
+        this.fileOpenTimes.set(path, freshInfo.modifiedTime);
         return new Uint8Array(buffer);
     }
 
@@ -261,7 +285,9 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
             }
 
             await client.writeFile(existingInfo.id, Buffer.from(content));
-            this.fileOpenTimes.set(path, Date.now());
+            // Fetch actual post-write modifiedTime from Drive (avoids clock skew false conflicts)
+            const updatedInfo = await client.getFileInfo(existingInfo.id);
+            this.fileOpenTimes.set(path, updatedInfo.modifiedTime);
             this.cache.invalidatePath(path);
             this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Changed, uri }]);
         } else {

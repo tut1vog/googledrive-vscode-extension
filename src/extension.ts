@@ -40,6 +40,22 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const signOutCmd = vscode.commands.registerCommand('gdrive.signOut', async () => {
         try {
             await authManager.signOut();
+
+            // Clear fsProvider state so stale client isn't used
+            fsProvider.setDriveClient(undefined);
+
+            // Clear persisted folder state
+            await context.globalState.update('gdrive.rootFolderId', undefined);
+            await context.globalState.update('gdrive.rootFolderName', undefined);
+
+            // Remove the gdrive:/ workspace folder from Explorer
+            const gdriveIdx = vscode.workspace.workspaceFolders?.findIndex(
+                (f) => f.uri.scheme === 'gdrive',
+            );
+            if (gdriveIdx !== undefined && gdriveIdx >= 0) {
+                vscode.workspace.updateWorkspaceFolders(gdriveIdx, 1);
+            }
+
             vscode.window.showInformationMessage('Google Drive: Signed out.');
         } catch (err) {
             logError('Sign out failed', err);

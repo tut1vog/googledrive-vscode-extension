@@ -41,8 +41,9 @@ export class DriveClient {
         let pageToken: string | undefined;
 
         do {
+            const escapedFolderId = folderId.replace(/'/g, "\\'");
             const res = await this.drive.files.list({
-                q: `'${folderId}' in parents and trashed = false`,
+                q: `'${escapedFolderId}' in parents and trashed = false`,
                 fields: 'nextPageToken, files(id, name, mimeType, size, createdTime, modifiedTime)',
                 pageSize: 1000,
                 pageToken,
@@ -70,8 +71,9 @@ export class DriveClient {
 
     async findByName(name: string, parentId: string): Promise<DriveFileInfo | undefined> {
         const escapedName = name.replace(/'/g, "\\'");
+        const escapedParentId = parentId.replace(/'/g, "\\'");
         const res = await this.drive.files.list({
-            q: `name = '${escapedName}' and '${parentId}' in parents and trashed = false`,
+            q: `name = '${escapedName}' and '${escapedParentId}' in parents and trashed = false`,
             fields: 'files(id, name, mimeType, size, createdTime, modifiedTime)',
             pageSize: 1,
         });

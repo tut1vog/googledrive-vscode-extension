@@ -26,6 +26,11 @@ This project is a Visual Studio Code extension that mounts Google Drive as a nat
 * **Error Handling:** Catch network and API errors and translate them into standard `vscode.FileSystemError` objects (e.g., `FileNotFound`, `NoPermissions`) so the VS Code UI handles them natively.
 * **Logging:** Use a `vscode.OutputChannel` for all logging and debugging information so the user can troubleshoot connection issues. Do not use `console.log` for production logging.
 
+## Documentation
+Before making changes, read these docs for full context:
+* [Architecture](docs/architecture.md) — module map, data flows, cache design, extension lifecycle
+* [Features](docs/features.md) — user-facing capabilities, conflict detection, Google Workspace doc handling
+
 ## Development Workflow
 * Install dependencies: `npm install`
 * Compile: `npm run compile`
