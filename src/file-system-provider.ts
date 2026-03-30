@@ -75,6 +75,9 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
     private cache = new PathCache();
     private driveClient: DriveClient | undefined;
 
+    /** Tracks the modifiedTime of each file when it was last read (opened). path -> modifiedTime ms */
+    private fileOpenTimes = new Map<string, number>();
+
     private _onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
     readonly onDidChangeFile = this._onDidChangeFile.event;
 
@@ -182,6 +185,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
         }
 
         const buffer = await client.readFile(info.id);
+        this.fileOpenTimes.set(path, info.modifiedTime);
         return new Uint8Array(buffer);
     }
 
@@ -203,7 +207,28 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
             if (existingInfo.isFolder) {
                 throw vscode.FileSystemError.FileIsADirectory(uri);
             }
+
+            // Check if the file was modified externally since we opened it
+            const openTime = this.fileOpenTimes.get(path);
+            if (openTime !== undefined) {
+                const freshInfo = await client.getFileInfo(existingInfo.id);
+                if (freshInfo.modifiedTime > openTime) {
+                    const remoteDate = new Date(freshInfo.modifiedTime).toLocaleString();
+                    const choice = await vscode.window.showWarningMessage(
+                        `"${freshInfo.name}" was modified externally (${remoteDate}). Overwrite remote changes?`,
+                        { modal: true },
+                        'Overwrite',
+                        'Cancel',
+                    );
+                    if (choice !== 'Overwrite') {
+                        log(`Write cancelled by user for ${path} (external modification detected)`);
+                        return;
+                    }
+                }
+            }
+
             await client.writeFile(existingInfo.id, Buffer.from(content));
+            this.fileOpenTimes.set(path, Date.now());
             this.cache.invalidatePath(path);
             this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Changed, uri }]);
         } else {
