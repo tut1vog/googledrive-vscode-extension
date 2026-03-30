@@ -65,24 +65,26 @@ export class AuthManager {
         let clientSecret = await this.secrets.get(CLIENT_SECRET_KEY);
 
         if (!clientId || !clientSecret) {
-            clientId = await vscode.window.showInputBox({
+            const rawClientId = await vscode.window.showInputBox({
                 prompt: 'Enter your Google OAuth2 Client ID',
                 placeHolder: 'xxxxxxx.apps.googleusercontent.com',
                 ignoreFocusOut: true,
             });
-            if (!clientId) {
+            if (!rawClientId) {
                 throw new Error('Client ID is required');
             }
+            clientId = rawClientId.trim();
 
-            clientSecret = await vscode.window.showInputBox({
+            const rawClientSecret = await vscode.window.showInputBox({
                 prompt: 'Enter your Google OAuth2 Client Secret',
                 placeHolder: 'GOCSPX-xxxxxxx',
                 ignoreFocusOut: true,
                 password: true,
             });
-            if (!clientSecret) {
+            if (!rawClientSecret) {
                 throw new Error('Client Secret is required');
             }
+            clientSecret = rawClientSecret.trim();
 
             await this.secrets.store(CLIENT_ID_KEY, clientId);
             await this.secrets.store(CLIENT_SECRET_KEY, clientSecret);
@@ -122,6 +124,8 @@ export class AuthManager {
         }
         this.client = undefined;
         await this.secrets.delete(TOKEN_KEY);
+        await this.secrets.delete(CLIENT_ID_KEY);
+        await this.secrets.delete(CLIENT_SECRET_KEY);
         log('Signed out');
         this._onDidChangeAuth.fire(false);
     }
