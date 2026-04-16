@@ -8,7 +8,7 @@ const DEFAULT_ROOT_ID = 'root'; // Google Drive "My Drive" alias
  * Maps VS Code path URIs (gdrive:/) to Google Drive file IDs.
  * Handles the fundamental mismatch between hierarchical paths and Drive's flat ID model.
  */
-class PathCache {
+export class PathCache {
     /** path -> Drive file ID */
     private pathToId = new Map<string, string>();
     /** path -> DriveFileInfo */
@@ -147,9 +147,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
 
     /** Fire a change event on the root to make VS Code re-read the directory. */
     refresh(): void {
-        this._onDidChangeFile.fire([
-            { type: vscode.FileChangeType.Changed, uri: vscode.Uri.parse('gdrive:/') },
-        ]);
+        this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Changed, uri: vscode.Uri.parse('gdrive:/') }]);
     }
 
     watch(_uri: vscode.Uri): vscode.Disposable {
@@ -217,10 +215,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
             if (info.isGoogleDoc) {
                 continue;
             }
-            entries.push([
-                info.name,
-                info.isFolder ? vscode.FileType.Directory : vscode.FileType.File,
-            ]);
+            entries.push([info.name, info.isFolder ? vscode.FileType.Directory : vscode.FileType.File]);
         }
         return entries;
     }
@@ -270,7 +265,9 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
     ): Promise<void> {
         const client = this.requireClient();
         const path = normalizePath(uri.path);
-        log(`writeFile called: ${path} (${content.length} bytes, create=${options.create}, overwrite=${options.overwrite})`);
+        log(
+            `writeFile called: ${path} (${content.length} bytes, create=${options.create}, overwrite=${options.overwrite})`,
+        );
         const existingInfo = await this.resolvePathInfo(path);
 
         if (existingInfo) {
@@ -297,7 +294,9 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
             const openTime = this.fileOpenTimes.get(path);
             if (openTime !== undefined) {
                 const freshInfo = await client.getFileInfo(existingInfo.id);
-                log(`Conflict check for ${path}: remote mtime=${freshInfo.modifiedTime}, local openTime=${openTime}, diff=${freshInfo.modifiedTime - openTime}ms`);
+                log(
+                    `Conflict check for ${path}: remote mtime=${freshInfo.modifiedTime}, local openTime=${openTime}, diff=${freshInfo.modifiedTime - openTime}ms`,
+                );
                 if (freshInfo.modifiedTime > openTime) {
                     if (!isManualSave) {
                         // Auto-save: silently fail to keep the dirty dot on the tab
@@ -338,9 +337,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
             const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
             const parentId = await this.resolvePathId(parentPath);
             if (!parentId) {
-                throw vscode.FileSystemError.FileNotFound(
-                    vscode.Uri.parse(`gdrive:${parentPath}`),
-                );
+                throw vscode.FileSystemError.FileNotFound(vscode.Uri.parse(`gdrive:${parentPath}`));
             }
 
             const fileName = path.substring(path.lastIndexOf('/') + 1);
@@ -372,11 +369,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
 
     // --- Rename / Move ---
 
-    async rename(
-        oldUri: vscode.Uri,
-        newUri: vscode.Uri,
-        options: { overwrite: boolean },
-    ): Promise<void> {
+    async rename(oldUri: vscode.Uri, newUri: vscode.Uri, options: { overwrite: boolean }): Promise<void> {
         const client = this.requireClient();
         const oldPath = normalizePath(oldUri.path);
         const newPath = normalizePath(newUri.path);
@@ -430,9 +423,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
         const parentId = await this.resolvePathId(parentPath);
 
         if (!parentId) {
-            throw vscode.FileSystemError.FileNotFound(
-                vscode.Uri.parse(`gdrive:${parentPath}`),
-            );
+            throw vscode.FileSystemError.FileNotFound(vscode.Uri.parse(`gdrive:${parentPath}`));
         }
 
         const folderName = path.substring(path.lastIndexOf('/') + 1);
@@ -503,7 +494,7 @@ export class GoogleDriveFileSystemProvider implements vscode.FileSystemProvider 
     }
 }
 
-function normalizePath(path: string): string {
+export function normalizePath(path: string): string {
     // Remove trailing slash, ensure leading slash
     let normalized = path.replace(/\/+/g, '/');
     if (normalized.length > 1 && normalized.endsWith('/')) {

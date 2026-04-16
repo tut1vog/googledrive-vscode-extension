@@ -2,7 +2,7 @@
 
 ## Status
 Current phase: Phase 2: Unit Testing with Vitest
-Current task: 2.2 — Export PathCache for independent testing
+Current task: 2.3 — Write unit tests for PathCache
 
 ---
 
@@ -23,7 +23,7 @@ Current task: 2.2 — Export PathCache for independent testing
 | ID | Task | Status |
 |----|------|--------|
 | 2.1 | Install vitest and scaffold test infrastructure | done |
-| 2.2 | Export PathCache for independent testing | pending |
+| 2.2 | Export PathCache for independent testing | done |
 | 2.3 | Write unit tests for PathCache | pending |
 | 2.4 | Write unit tests for `extractFolderId` and `normalizePath` | pending |
 | 2.5 | Write unit tests for DriveClient | pending |
@@ -48,34 +48,44 @@ Current task: 2.2 — Export PathCache for independent testing
 
 ## Current Task
 
-**ID**: 2.2
-**Title**: Export PathCache, normalizePath, and extractFolderId for independent testing
+**ID**: 2.3
+**Title**: Write unit tests for PathCache
 **Phase**: Unit Testing with Vitest
-**Status**: in-progress
+**Status**: pending
 
 ### Goal
-Export the internal classes/functions that need unit testing so test files can import them directly, without changing any behavior.
+Thoroughly test PathCache — the class that bridges VS Code's hierarchical paths with Drive's flat ID model. This is the highest-value test target.
 
 ### Context
-- `PathCache` is a module-level class in `src/file-system-provider.ts` (line 11), not exported. Used only by `GoogleDriveFileSystemProvider`.
-- `normalizePath` is a module-level function in `src/file-system-provider.ts` (line 506), not exported.
-- `extractFolderId` is a module-level function in `src/drive-picker.ts` (line 165), not exported.
-- All three need `export` keywords added. No other changes needed.
-- After exporting, run `npm run compile` to confirm compilation, `npx eslint src/` to confirm no new lint errors, and `npx prettier --write` on changed files.
+- `PathCache` is exported from `src/file-system-provider.ts`. Constructor takes optional `rootId` (defaults to `'root'`).
+- It also imports `DriveFileInfo` from `src/drive-client.ts` — tests need to create mock `DriveFileInfo` objects.
+- `DriveFileInfo` interface: `{ id: string, name: string, mimeType: string, isFolder: boolean, size: number, modifiedTime: number }` — read `src/drive-client.ts` to confirm exact shape.
+- Test file: `test/unit/path-cache.test.ts` per testing conventions.
+- vscode mock is aliased in `vitest.config.ts` so imports from source files work.
 
-### Implementation Steps
-1. Add `export` to `class PathCache` in `src/file-system-provider.ts` line 11.
-2. Add `export` to `function normalizePath` in `src/file-system-provider.ts` line 506.
-3. Add `export` to `function extractFolderId` in `src/drive-picker.ts` line 165.
-4. Run `npx prettier --write src/file-system-provider.ts src/drive-picker.ts`.
-5. Run `npx eslint src/` and `npm run compile`.
+### Methods to test
+1. `constructor(rootId?)` — root path '/' maps to rootId
+2. `setEntry(path, info)` / `getId(path)` / `getInfo(path)` — basic set/get
+3. `setDirListing(parentPath, children)` — populates child paths and dir listing
+4. `hasDirListing(parentPath)` — true after setDirListing, false before
+5. `addToDirListing(parentPath, child)` — adds single child
+6. `removeFromDirListing(parentPath, childName)` — removes single child
+7. `entries()` — iterates all path-to-info entries
+8. `invalidatePath(path)` — removes the path, its children, AND the parent's dir listing
+9. `invalidateAll()` — clears everything, preserves root ID
+10. `setRootId(rootId)` — changes root and invalidates all
+
+### Edge cases to cover
+- Invalidating root `/` clears all children
+- Invalidating a deep path clears its subtree but not siblings
+- `invalidateAll` preserves the root ID mapping
+- `setDirListing` on root vs nested paths (child path construction differs)
+- `addToDirListing` when no dir listing exists (should still set the entry)
 
 ### Verification
-- [ ] `grep 'export class PathCache' src/file-system-provider.ts` matches
-- [ ] `grep 'export function normalizePath' src/file-system-provider.ts` matches
-- [ ] `grep 'export function extractFolderId' src/drive-picker.ts` matches
-- [ ] `npm run compile` succeeds
-- [ ] `npx eslint src/file-system-provider.ts src/drive-picker.ts` exits 0
+- [ ] `npx vitest run test/unit/path-cache.test.ts` passes
+- [ ] At least 15 test cases covering all 10 methods listed above
+- [ ] Edge cases for invalidation are tested (subtree cleared, siblings preserved, root preserved)
 
 ### Suggested Agent
-general-purpose — simple export additions
+general-purpose — unit test authoring

@@ -162,7 +162,7 @@ async function pickByUrl(client: DriveClient): Promise<FolderSelection | undefin
     }
 }
 
-function extractFolderId(input: string): string | null {
+export function extractFolderId(input: string): string | null {
     const trimmed = input.trim();
 
     // Match: https://drive.google.com/drive/folders/{id}
