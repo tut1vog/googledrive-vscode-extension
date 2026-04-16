@@ -166,15 +166,10 @@ function extractFolderId(input: string): string | null {
     const trimmed = input.trim();
 
     // Match: https://drive.google.com/drive/folders/{id}
+    // and:   https://drive.google.com/drive/u/0/folders/{id}
     const urlMatch = trimmed.match(/\/folders\/([a-zA-Z0-9_-]+)/);
     if (urlMatch) {
         return urlMatch[1];
-    }
-
-    // Match: https://drive.google.com/drive/u/0/folders/{id}
-    const urlMatch2 = trimmed.match(/\/folders\/([a-zA-Z0-9_-]+)/);
-    if (urlMatch2) {
-        return urlMatch2[1];
     }
 
     // Looks like a raw ID (alphanumeric, hyphens, underscores)

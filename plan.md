@@ -1,8 +1,8 @@
 # Plan
 
 ## Status
-Current phase: Phase 1: Linting & Formatting
-Current task: 1.2 — Fix duplicate regex in drive-picker.ts extractFolderId
+Current phase: Phase 2: Unit Testing with Vitest
+Current task: 2.1 — Install vitest and scaffold test infrastructure
 
 ---
 
@@ -14,8 +14,8 @@ Current task: 1.2 — Fix duplicate regex in drive-picker.ts extractFolderId
 | ID | Task | Status |
 |----|------|--------|
 | 1.1 | Add ESLint flat config with TypeScript and Prettier | done |
-| 1.2 | Fix duplicate regex in `drive-picker.ts` `extractFolderId` | pending |
-| 1.3 | Update `package.json` lint script and add format script | pending |
+| 1.2 | Fix duplicate regex in `drive-picker.ts` `extractFolderId` | done |
+| 1.3 | Update `package.json` lint script and add format script | done |
 
 ### Phase 2: Unit Testing with Vitest
 > Add a unit test framework and cover the highest-value logic: PathCache, extractFolderId, normalizePath, DriveClient, conflict detection.
@@ -48,34 +48,34 @@ Current task: 1.2 — Fix duplicate regex in drive-picker.ts extractFolderId
 
 ## Current Task
 
-**ID**: 1.2
-**Title**: Fix duplicate regex in `drive-picker.ts` `extractFolderId`
-**Phase**: Linting & Formatting
+**ID**: 2.1
+**Title**: Install vitest and scaffold test infrastructure
+**Phase**: Unit Testing with Vitest
 **Status**: pending
 
 ### Goal
-Remove the duplicate regex check in `extractFolderId` (lines 169-176 of `src/drive-picker.ts`) where `urlMatch` and `urlMatch2` use the identical pattern `/\/folders\/([a-zA-Z0-9_-]+)/`. The second check is dead code since the first match would always catch it.
+Set up vitest as the unit test framework with proper TypeScript configuration and create the test directory structure so subsequent tasks can immediately write tests.
 
 ### Context
-- File: `src/drive-picker.ts`, function `extractFolderId` starting at line 165.
-- Lines 168-172: first regex match `urlMatch` with `/\/folders\/([a-zA-Z0-9_-]+)/`
-- Lines 174-178: second regex match `urlMatch2` with the **identical** pattern — dead code.
-- The comment says "Match: https://drive.google.com/drive/u/0/folders/{id}" but both regexes already match this URL since they look for `/folders/` anywhere in the string.
-- After removing the duplicate, the function should still have: (1) the `/folders/` regex match, and (2) the raw ID fallback check.
-- Run `npx eslint src/drive-picker.ts` and `npx prettier --write src/drive-picker.ts` after editing.
+- No test framework installed. No `test/` directory exists.
+- `tsconfig.json` includes only `src/**/*` — tests need their own tsconfig or vitest config for TypeScript.
+- `.claude/rules/testing.md` specifies: unit tests in `test/unit/` with naming pattern `<module>.test.ts`, use vitest imports (`describe`, `it`, `expect`, `beforeEach`).
+- The project uses `vscode` as an external dependency — tests that import source files will need `vscode` mocked.
+- `package.json` has no `test` script for unit tests. CLAUDE.md says unit tests run via `npx vitest`.
 
 ### Implementation Steps
-1. Read `src/drive-picker.ts` lines 165-185.
-2. Remove lines 174-178 (the `urlMatch2` block and its comment).
-3. Update the remaining comment on the first regex to cover both URL formats.
-4. Run `npx prettier --write src/drive-picker.ts` to format.
-5. Run `npx eslint src/drive-picker.ts` to confirm no lint errors.
+1. Install `vitest` as a devDependency.
+2. Create `vitest.config.ts` at project root — set `test.include` to `test/unit/**/*.test.ts`, configure TypeScript support.
+3. Create `test/unit/` directory with a minimal smoke test file (`test/unit/smoke.test.ts`) that just asserts `true` to verify the framework works.
+4. Create `test/mocks/vscode.ts` — a mock of the `vscode` module (Uri, FileSystemError, FileType, window, workspace) that tests can use.
+5. Add/update `package.json` script: `"test:unit": "vitest run"`.
+6. Run `npx vitest run` to verify the smoke test passes.
 
 ### Verification
-- [ ] `urlMatch2` no longer exists in `src/drive-picker.ts`
-- [ ] `extractFolderId` still handles: folder URLs, `/u/0/folders/` URLs, and raw IDs
-- [ ] `npx eslint src/drive-picker.ts` exits 0
-- [ ] `npm run compile` succeeds
+- [ ] `npx vitest run` passes with the smoke test
+- [ ] `test/unit/` directory exists
+- [ ] `test/mocks/vscode.ts` exists and exports mock objects for Uri, FileSystemError, FileType
+- [ ] `vitest.config.ts` exists
 
 ### Suggested Agent
-general-purpose — simple code edit with verification
+general-purpose — package installation and config scaffolding
