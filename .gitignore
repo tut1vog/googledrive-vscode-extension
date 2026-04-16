@@ -1,6 +1,5 @@
 out/
 node_modules/
-.vscode/
 dist/
 *.vsix
 .env
