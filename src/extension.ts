@@ -2,9 +2,11 @@ import * as vscode from 'vscode';
 import { AuthManager } from './auth';
 import { DriveClient } from './drive-client';
 import { GoogleDriveFileSystemProvider } from './file-system-provider';
-import { DriveTreeDataProvider } from './drive-tree';
+import { DriveTreeDataProvider, DriveTreeItem } from './drive-tree';
 import { pickDriveFolder } from './drive-picker';
 import { initLogger, log, logError, dispose as disposeLogger } from './logger';
+
+let currentClient: DriveClient | undefined;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
     const outputChannel = initLogger();
@@ -33,6 +35,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         try {
             const client = await authManager.signIn();
             const driveClient = new DriveClient(client);
+            currentClient = driveClient;
             fsProvider.setDriveClient(driveClient);
             treeProvider.setDriveClient(new DriveClient(client));
             vscode.commands.executeCommand('setContext', 'gdrive.isSignedIn', true);
@@ -52,6 +55,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             await authManager.signOut();
 
             // Clear fsProvider state so stale client isn't used
+            currentClient = undefined;
             fsProvider.setDriveClient(undefined);
             treeProvider.setDriveClient(undefined);
             vscode.commands.executeCommand('setContext', 'gdrive.isSignedIn', false);
@@ -116,6 +120,89 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         }
     });
 
+    // Command: New File (context menu on folder)
+    const newFileCmd = vscode.commands.registerCommand('gdrive.newFile', async (item: DriveTreeItem) => {
+        if (!currentClient || !item?.fileInfo.isFolder) {
+            return;
+        }
+        const name = await vscode.window.showInputBox({ prompt: 'Enter file name', placeHolder: 'untitled.txt' });
+        if (!name) {
+            return;
+        }
+        try {
+            await currentClient.createFile(name, item.fileInfo.id, Buffer.from(''));
+            treeProvider.refresh();
+        } catch (err) {
+            logError('Failed to create file', err);
+            vscode.window.showErrorMessage(
+                `Failed to create file: ${err instanceof Error ? err.message : String(err)}`,
+            );
+        }
+    });
+
+    // Command: New Folder (context menu on folder)
+    const newFolderCmd = vscode.commands.registerCommand('gdrive.newFolder', async (item: DriveTreeItem) => {
+        if (!currentClient || !item?.fileInfo.isFolder) {
+            return;
+        }
+        const name = await vscode.window.showInputBox({ prompt: 'Enter folder name', placeHolder: 'New Folder' });
+        if (!name) {
+            return;
+        }
+        try {
+            await currentClient.createFolder(name, item.fileInfo.id);
+            treeProvider.refresh();
+        } catch (err) {
+            logError('Failed to create folder', err);
+            vscode.window.showErrorMessage(
+                `Failed to create folder: ${err instanceof Error ? err.message : String(err)}`,
+            );
+        }
+    });
+
+    // Command: Delete (context menu on file or folder)
+    const deleteCmd = vscode.commands.registerCommand('gdrive.delete', async (item: DriveTreeItem) => {
+        if (!currentClient || !item) {
+            return;
+        }
+        const confirm = await vscode.window.showWarningMessage(
+            `Delete "${item.fileInfo.name}"? This moves it to trash.`,
+            { modal: true },
+            'Delete',
+        );
+        if (confirm !== 'Delete') {
+            return;
+        }
+        try {
+            await currentClient.deleteFile(item.fileInfo.id);
+            treeProvider.refresh();
+        } catch (err) {
+            logError('Failed to delete', err);
+            vscode.window.showErrorMessage(`Failed to delete: ${err instanceof Error ? err.message : String(err)}`);
+        }
+    });
+
+    // Command: Rename (context menu on file or folder)
+    const renameCmd = vscode.commands.registerCommand('gdrive.rename', async (item: DriveTreeItem) => {
+        if (!currentClient || !item) {
+            return;
+        }
+        const newName = await vscode.window.showInputBox({
+            prompt: 'Enter new name',
+            value: item.fileInfo.name,
+        });
+        if (!newName || newName === item.fileInfo.name) {
+            return;
+        }
+        try {
+            await currentClient.rename(item.fileInfo.id, newName);
+            treeProvider.refresh();
+        } catch (err) {
+            logError('Failed to rename', err);
+            vscode.window.showErrorMessage(`Failed to rename: ${err instanceof Error ? err.message : String(err)}`);
+        }
+    });
+
     context.subscriptions.push(
         fsRegistration,
         saveReasonListener,
@@ -124,6 +211,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         openDriveCmd,
         openDriveRootCmd,
         refreshTreeCmd,
+        newFileCmd,
+        newFolderCmd,
+        deleteCmd,
+        renameCmd,
         treeView,
         authManager,
         outputChannel,
@@ -148,6 +239,7 @@ async function ensureAuthenticated(
             try {
                 const client = await authManager.signIn();
                 const driveClient = new DriveClient(client);
+                currentClient = driveClient;
                 fsProvider.setDriveClient(driveClient);
                 treeProvider.setDriveClient(driveClient);
                 vscode.commands.executeCommand('setContext', 'gdrive.isSignedIn', true);
@@ -168,6 +260,7 @@ async function ensureAuthenticated(
         return undefined;
     }
     const driveClient = new DriveClient(oauthClient);
+    currentClient = driveClient;
     fsProvider.setDriveClient(driveClient);
     treeProvider.setDriveClient(driveClient);
     vscode.commands.executeCommand('setContext', 'gdrive.isSignedIn', true);
@@ -221,7 +314,9 @@ async function restoreSession(
     try {
         const client = await authManager.getOAuth2Client();
         if (client?.credentials.access_token) {
-            fsProvider.setDriveClient(new DriveClient(client));
+            const driveClient = new DriveClient(client);
+            currentClient = driveClient;
+            fsProvider.setDriveClient(driveClient);
             treeProvider.setDriveClient(new DriveClient(client));
 
             // Restore the previously mounted folder (defaults to 'root').

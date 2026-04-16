@@ -2,7 +2,7 @@
 
 ## Status
 Current phase: Phase 5: TreeView Browsing
-Current task: 5.3 — Add TreeView context menu actions
+Current task: 5.4 — Remove workspace-folder mounting from extension.ts
 
 ---
 
@@ -51,7 +51,7 @@ Current task: 5.3 — Add TreeView context menu actions
 |----|------|--------|
 | 5.1 | Create DriveTreeDataProvider | done |
 | 5.2 | Register TreeView in package.json and extension.ts | done |
-| 5.3 | Add TreeView context menu actions (create, delete, rename, refresh) | pending |
+| 5.3 | Add TreeView context menu actions (create, delete, rename, refresh) | done |
 | 5.4 | Remove workspace-folder mounting from extension.ts | pending |
 | 5.5 | Write unit tests for DriveTreeDataProvider | pending |
 | 5.6 | Update integration tests for TreeView commands | pending |

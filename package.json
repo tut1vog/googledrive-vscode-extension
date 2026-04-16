@@ -67,6 +67,24 @@
         "command": "gdrive.refreshTree",
         "title": "Google Drive: Refresh",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "gdrive.newFile",
+        "title": "New File",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "gdrive.newFolder",
+        "title": "New Folder",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "gdrive.delete",
+        "title": "Delete"
+      },
+      {
+        "command": "gdrive.rename",
+        "title": "Rename"
       }
     ],
     "menus": {
@@ -80,6 +98,38 @@
           "command": "gdrive.openDrive",
           "when": "view == gdriveExplorer",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "gdrive.newFile",
+          "when": "view == gdriveExplorer && viewItem == driveFolder",
+          "group": "1_new@1"
+        },
+        {
+          "command": "gdrive.newFolder",
+          "when": "view == gdriveExplorer && viewItem == driveFolder",
+          "group": "1_new@2"
+        },
+        {
+          "command": "gdrive.rename",
+          "when": "view == gdriveExplorer && viewItem =~ /driveFile|driveFolder/",
+          "group": "7_edit@1"
+        },
+        {
+          "command": "gdrive.delete",
+          "when": "view == gdriveExplorer && viewItem =~ /driveFile|driveFolder/",
+          "group": "7_edit@2"
+        },
+        {
+          "command": "gdrive.newFile",
+          "when": "view == gdriveExplorer && viewItem == driveFolder",
+          "group": "inline"
+        },
+        {
+          "command": "gdrive.newFolder",
+          "when": "view == gdriveExplorer && viewItem == driveFolder",
+          "group": "inline"
         }
       ]
     }
