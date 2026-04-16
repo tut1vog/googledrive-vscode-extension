@@ -2,7 +2,7 @@
 
 ## Status
 Current phase: Phase 5: TreeView Browsing
-Current task: 5.2 — Register TreeView in package.json and extension.ts
+Current task: 5.3 — Add TreeView context menu actions
 
 ---
 
@@ -50,7 +50,7 @@ Current task: 5.2 — Register TreeView in package.json and extension.ts
 | ID | Task | Status |
 |----|------|--------|
 | 5.1 | Create DriveTreeDataProvider | done |
-| 5.2 | Register TreeView in package.json and extension.ts | pending |
+| 5.2 | Register TreeView in package.json and extension.ts | done |
 | 5.3 | Add TreeView context menu actions (create, delete, rename, refresh) | pending |
 | 5.4 | Remove workspace-folder mounting from extension.ts | pending |
 | 5.5 | Write unit tests for DriveTreeDataProvider | pending |
@@ -61,33 +61,24 @@ Current task: 5.2 — Register TreeView in package.json and extension.ts
 
 ## Current Task
 
-**ID**: 5.2
-**Title**: Register TreeView in package.json and extension.ts
+**ID**: 5.3
+**Title**: Add TreeView context menu actions
 **Phase**: TreeView Browsing
 **Status**: pending
 
 ### Goal
-Wire up the `DriveTreeDataProvider` into the extension: register a view container (sidebar icon), a tree view, and connect it to the auth/root folder lifecycle in `extension.ts`.
+Add right-click context menu actions on tree items: New File, New Folder, Delete, Rename, Refresh folder. These call the existing DriveClient methods.
 
 ### Context
-- `src/drive-tree.ts` exports `DriveTreeDataProvider` and `DriveTreeItem`.
-- `src/extension.ts` currently creates `AuthManager`, `GoogleDriveFileSystemProvider`, restores session, registers commands.
-- The TreeView needs to be created via `vscode.window.createTreeView('gdriveExplorer', { treeDataProvider })`.
-- `package.json` needs `viewsContainers.activitybar`, `views`, and a `viewsWelcome` for the empty/signed-out state.
-- The existing commands `gdrive.openDrive` and `gdrive.openDriveRoot` should set the tree's root folder instead of calling `mountDriveFolder`.
-- Need a new command `gdrive.refreshTree` for the TreeView refresh button.
-
-### Files to modify
-1. `package.json` — add `viewsContainers`, `views`, `viewsWelcome`, new command, icons
-2. `src/extension.ts` — import and wire DriveTreeDataProvider, update openDrive/openDriveRoot commands
+- `package.json` needs `menus.view/item/context` entries with `when` clauses based on `contextValue` (driveFolder, driveFile, driveGoogleDoc).
+- Command handlers in `extension.ts` need access to both `treeProvider` and `DriveClient`.
+- The `DriveTreeItem` has `fileInfo` (with `id`, `name`) and `path`.
+- After mutations, call `treeProvider.refresh()` to reload the tree.
 
 ### Verification
 - [ ] `npm run compile` succeeds
-- [ ] `npx eslint src/extension.ts` reports no new errors
-- [ ] `package.json` has `viewsContainers.activitybar` with gdrive container
-- [ ] `package.json` has `views.gdriveContainer` with gdriveExplorer view
-- [ ] TreeView is registered in activate() and added to subscriptions
-- [ ] DriveTreeDataProvider receives client on sign-in and root folder on openDrive
+- [ ] Context menu commands registered in package.json and extension.ts
+- [ ] New File and New Folder appear on folders; Delete and Rename appear on files and folders
 
 ### Suggested Agent
-general-purpose — package.json + extension.ts wiring
+general-purpose — package.json menus + command handlers

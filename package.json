@@ -21,6 +21,31 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "gdriveContainer",
+          "title": "Google Drive",
+          "icon": "images/icon.png"
+        }
+      ]
+    },
+    "views": {
+      "gdriveContainer": [
+        {
+          "id": "gdriveExplorer",
+          "name": "Files",
+          "icon": "images/icon.png"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "gdriveExplorer",
+        "contents": "Sign in to browse your Google Drive files.\n[Sign In](command:gdrive.signIn)",
+        "when": "!gdrive.isSignedIn"
+      }
+    ],
     "commands": [
       {
         "command": "gdrive.signIn",
@@ -37,8 +62,27 @@
       {
         "command": "gdrive.openDriveRoot",
         "title": "Google Drive: Open My Drive (Root)"
+      },
+      {
+        "command": "gdrive.refreshTree",
+        "title": "Google Drive: Refresh",
+        "icon": "$(refresh)"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "gdrive.refreshTree",
+          "when": "view == gdriveExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "gdrive.openDrive",
+          "when": "view == gdriveExplorer",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run bundle",
