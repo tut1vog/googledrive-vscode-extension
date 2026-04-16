@@ -2,7 +2,7 @@
 
 ## Status
 Current phase: Phase 2: Unit Testing with Vitest
-Current task: 2.1 — Install vitest and scaffold test infrastructure
+Current task: 2.2 — Export PathCache for independent testing
 
 ---
 
@@ -22,7 +22,7 @@ Current task: 2.1 — Install vitest and scaffold test infrastructure
 
 | ID | Task | Status |
 |----|------|--------|
-| 2.1 | Install vitest and scaffold test infrastructure | pending |
+| 2.1 | Install vitest and scaffold test infrastructure | done |
 | 2.2 | Export PathCache for independent testing | pending |
 | 2.3 | Write unit tests for PathCache | pending |
 | 2.4 | Write unit tests for `extractFolderId` and `normalizePath` | pending |
@@ -48,34 +48,34 @@ Current task: 2.1 — Install vitest and scaffold test infrastructure
 
 ## Current Task
 
-**ID**: 2.1
-**Title**: Install vitest and scaffold test infrastructure
+**ID**: 2.2
+**Title**: Export PathCache, normalizePath, and extractFolderId for independent testing
 **Phase**: Unit Testing with Vitest
-**Status**: pending
+**Status**: in-progress
 
 ### Goal
-Set up vitest as the unit test framework with proper TypeScript configuration and create the test directory structure so subsequent tasks can immediately write tests.
+Export the internal classes/functions that need unit testing so test files can import them directly, without changing any behavior.
 
 ### Context
-- No test framework installed. No `test/` directory exists.
-- `tsconfig.json` includes only `src/**/*` — tests need their own tsconfig or vitest config for TypeScript.
-- `.claude/rules/testing.md` specifies: unit tests in `test/unit/` with naming pattern `<module>.test.ts`, use vitest imports (`describe`, `it`, `expect`, `beforeEach`).
-- The project uses `vscode` as an external dependency — tests that import source files will need `vscode` mocked.
-- `package.json` has no `test` script for unit tests. CLAUDE.md says unit tests run via `npx vitest`.
+- `PathCache` is a module-level class in `src/file-system-provider.ts` (line 11), not exported. Used only by `GoogleDriveFileSystemProvider`.
+- `normalizePath` is a module-level function in `src/file-system-provider.ts` (line 506), not exported.
+- `extractFolderId` is a module-level function in `src/drive-picker.ts` (line 165), not exported.
+- All three need `export` keywords added. No other changes needed.
+- After exporting, run `npm run compile` to confirm compilation, `npx eslint src/` to confirm no new lint errors, and `npx prettier --write` on changed files.
 
 ### Implementation Steps
-1. Install `vitest` as a devDependency.
-2. Create `vitest.config.ts` at project root — set `test.include` to `test/unit/**/*.test.ts`, configure TypeScript support.
-3. Create `test/unit/` directory with a minimal smoke test file (`test/unit/smoke.test.ts`) that just asserts `true` to verify the framework works.
-4. Create `test/mocks/vscode.ts` — a mock of the `vscode` module (Uri, FileSystemError, FileType, window, workspace) that tests can use.
-5. Add/update `package.json` script: `"test:unit": "vitest run"`.
-6. Run `npx vitest run` to verify the smoke test passes.
+1. Add `export` to `class PathCache` in `src/file-system-provider.ts` line 11.
+2. Add `export` to `function normalizePath` in `src/file-system-provider.ts` line 506.
+3. Add `export` to `function extractFolderId` in `src/drive-picker.ts` line 165.
+4. Run `npx prettier --write src/file-system-provider.ts src/drive-picker.ts`.
+5. Run `npx eslint src/` and `npm run compile`.
 
 ### Verification
-- [ ] `npx vitest run` passes with the smoke test
-- [ ] `test/unit/` directory exists
-- [ ] `test/mocks/vscode.ts` exists and exports mock objects for Uri, FileSystemError, FileType
-- [ ] `vitest.config.ts` exists
+- [ ] `grep 'export class PathCache' src/file-system-provider.ts` matches
+- [ ] `grep 'export function normalizePath' src/file-system-provider.ts` matches
+- [ ] `grep 'export function extractFolderId' src/drive-picker.ts` matches
+- [ ] `npm run compile` succeeds
+- [ ] `npx eslint src/file-system-provider.ts src/drive-picker.ts` exits 0
 
 ### Suggested Agent
-general-purpose — package installation and config scaffolding
+general-purpose — simple export additions
