@@ -21,6 +21,11 @@ suite('All gdrive commands registered', () => {
         'gdrive.signOut',
         'gdrive.openDrive',
         'gdrive.openDriveRoot',
+        'gdrive.refreshTree',
+        'gdrive.newFile',
+        'gdrive.newFolder',
+        'gdrive.delete',
+        'gdrive.rename',
     ];
 
     let registeredCommands: string[];
@@ -39,49 +44,47 @@ suite('All gdrive commands registered', () => {
     }
 });
 
-suite('gdrive:/ FileSystemProvider', () => {
+suite('Google Drive TreeView', () => {
+    let ext: vscode.Extension<unknown> | undefined;
+
     suiteSetup(async () => {
-        // Ensure the extension is activated before testing the provider
-        const ext = vscode.extensions.getExtension(EXTENSION_ID);
-        if (ext && !ext.isActive) {
-            await ext.activate();
+        ext = vscode.extensions.getExtension(EXTENSION_ID);
+        assert.ok(ext, 'Extension should exist');
+        if (!ext!.isActive) {
+            await ext!.activate();
         }
     });
 
-    test('provider is registered for gdrive scheme', async () => {
-        const uri = vscode.Uri.parse('gdrive:/');
-        try {
-            await vscode.workspace.fs.stat(uri);
-            // If stat succeeds that also means the provider is registered
-        } catch (err: unknown) {
-            // The provider IS registered, but no Drive client is configured,
-            // so we expect an error from our provider rather than the generic
-            // "no provider" error that VS Code throws for unknown schemes.
-            const message = err instanceof Error ? err.message : String(err);
-            const isNoProviderError =
-                message.includes('no provider') ||
-                message.includes('is not available');
-            assert.ok(
-                !isNoProviderError,
-                `Expected a Drive-related error, but got a "no provider" error: ${message}`,
-            );
-        }
+    test('packageJSON contributes viewsContainers', () => {
+        const contributes = ext!.packageJSON?.contributes;
+        assert.ok(contributes, 'packageJSON should have contributes section');
+        assert.ok(
+            contributes.viewsContainers,
+            'contributes should include viewsContainers',
+        );
+        assert.ok(
+            contributes.viewsContainers.activitybar,
+            'viewsContainers should include activitybar',
+        );
+        const container = contributes.viewsContainers.activitybar.find(
+            (c: { id: string }) => c.id === 'gdriveContainer',
+        );
+        assert.ok(container, 'gdriveContainer should be defined in activitybar');
     });
 
-    test('readDirectory on gdrive:/ fails without authentication', async () => {
-        const uri = vscode.Uri.parse('gdrive:/');
-        try {
-            await vscode.workspace.fs.readDirectory(uri);
-            // It is acceptable if this succeeds with an empty listing
-        } catch (err: unknown) {
-            // Any error other than "no provider" is fine — it means
-            // the provider is registered but cannot serve data.
-            const message = err instanceof Error ? err.message : String(err);
-            assert.ok(
-                !message.includes('no provider'),
-                `Expected a Drive-related error, got: ${message}`,
-            );
-        }
+    test('packageJSON contributes gdriveExplorer view', () => {
+        const contributes = ext!.packageJSON?.contributes;
+        assert.ok(contributes, 'packageJSON should have contributes section');
+        assert.ok(contributes.views, 'contributes should include views');
+        const views = contributes.views.gdriveContainer;
+        assert.ok(
+            Array.isArray(views),
+            'gdriveContainer should have an array of views',
+        );
+        const explorer = views.find(
+            (v: { id: string }) => v.id === 'gdriveExplorer',
+        );
+        assert.ok(explorer, 'gdriveExplorer view should be defined');
     });
 });
 

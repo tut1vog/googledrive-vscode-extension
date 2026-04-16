@@ -2,7 +2,7 @@
 
 ## Status
 Current phase: Phase 5: TreeView Browsing
-Current task: 5.6 — Update integration tests for TreeView commands
+Current task: 5.7 — Update documentation
 
 ---
 
@@ -54,7 +54,7 @@ Current task: 5.6 — Update integration tests for TreeView commands
 | 5.3 | Add TreeView context menu actions (create, delete, rename, refresh) | done |
 | 5.4 | Remove workspace-folder mounting from extension.ts | done |
 | 5.5 | Write unit tests for DriveTreeDataProvider | done |
-| 5.6 | Update integration tests for TreeView commands | pending |
+| 5.6 | Update integration tests for TreeView commands | done |
 | 5.7 | Update documentation (README, architecture, features) | pending |
 
 ---
