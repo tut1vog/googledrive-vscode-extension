@@ -2,7 +2,7 @@
 
 ## Status
 Current phase: Phase 2: Unit Testing with Vitest
-Current task: 2.5 — Write unit tests for DriveClient
+Current task: 2.6 — Write unit tests for conflict detection in writeFile
 
 ---
 
@@ -26,7 +26,7 @@ Current task: 2.5 — Write unit tests for DriveClient
 | 2.2 | Export PathCache for independent testing | done |
 | 2.3 | Write unit tests for PathCache | done |
 | 2.4 | Write unit tests for `extractFolderId` and `normalizePath` | done |
-| 2.5 | Write unit tests for DriveClient | pending |
+| 2.5 | Write unit tests for DriveClient | done |
 | 2.6 | Write unit tests for conflict detection in `writeFile` | pending |
 
 ### Phase 3: Integration Testing
@@ -48,42 +48,27 @@ Current task: 2.5 — Write unit tests for DriveClient
 
 ## Current Task
 
-**ID**: 2.4
-**Title**: Write unit tests for extractFolderId and normalizePath
+**ID**: 2.6
+**Title**: Write unit tests for conflict detection in writeFile
 **Phase**: Unit Testing with Vitest
 **Status**: pending
 
 ### Goal
-Test the two utility functions: `extractFolderId` (URL/ID parsing) and `normalizePath` (path normalization).
+Test the conflict detection logic in GoogleDriveFileSystemProvider.writeFile — the most complex behavioral logic in the extension.
 
 ### Context
-- `extractFolderId` exported from `src/drive-picker.ts` — but imports `DriveClient` from `drive-client.ts`. Need to check if the import is used by `extractFolderId` itself or just by `pickDriveFolder`.
-- `normalizePath` exported from `src/file-system-provider.ts` — pure function, no dependencies.
-- Test file: `test/unit/drive-picker.test.ts` for extractFolderId, `test/unit/normalize-path.test.ts` for normalizePath (or combine).
-- `googleapis` and `google-auth-library` are already mocked in vitest.config.ts aliases.
-
-### extractFolderId cases
-- Standard folder URL: `https://drive.google.com/drive/folders/abc123`
-- URL with user prefix: `https://drive.google.com/drive/u/0/folders/abc123`
-- URL with query params: `https://drive.google.com/drive/folders/abc123?resourcekey=xyz`
-- Raw folder ID: `abc123_-def`
-- Too-short raw ID (≤5 chars): should return null
-- Invalid input with special chars: should return null
-- Input with leading/trailing whitespace: should trim and still work
-- Empty string: should return null
-
-### normalizePath cases
-- Normal path: `/docs/file.txt` → unchanged
-- Trailing slash: `/docs/` → `/docs`
-- Double slashes: `//docs//file.txt` → `/docs/file.txt`
-- Root: `/` → `/`
-- No leading slash: `docs/file.txt` → `/docs/file.txt`
-- Empty string: `` → `/`
+- Conflict detection is in `src/file-system-provider.ts` within `GoogleDriveFileSystemProvider.writeFile()`.
+- The provider tracks `fileOpenTimes` (path → modifiedTime when file was last read) and `conflictedFiles` (set of paths with known conflicts).
+- On writeFile, if the file was opened and the remote modifiedTime is newer than the open time, it's a conflict.
+- `lastSaveReason` distinguishes auto-save (AfterDelay) from manual save (Manual/FocusOut).
+- Auto-save with conflict: silently skip write, keep dirty dot.
+- Manual save with conflict: prompt user with "Overwrite" / "Discard" options.
+- Read the full writeFile method and conflict detection logic carefully.
+- This test needs to instantiate GoogleDriveFileSystemProvider and mock its DriveClient.
 
 ### Verification
-- [ ] `npx vitest run` passes all tests (existing + new)
-- [ ] At least 8 test cases for extractFolderId
-- [ ] At least 5 test cases for normalizePath
+- [ ] `npx vitest run` passes all tests
+- [ ] At least 6 test cases covering: no conflict write, auto-save conflict skip, manual save conflict prompt, overwrite on conflict, discard on conflict, new file creation
 
 ### Suggested Agent
-general-purpose — unit test authoring
+general-purpose — complex test authoring
