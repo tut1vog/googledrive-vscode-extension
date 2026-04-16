@@ -2,7 +2,7 @@
 
 ## Status
 Current phase: Phase 2: Unit Testing with Vitest
-Current task: 2.4 — Write unit tests for extractFolderId and normalizePath
+Current task: 2.5 — Write unit tests for DriveClient
 
 ---
 
@@ -25,7 +25,7 @@ Current task: 2.4 — Write unit tests for extractFolderId and normalizePath
 | 2.1 | Install vitest and scaffold test infrastructure | done |
 | 2.2 | Export PathCache for independent testing | done |
 | 2.3 | Write unit tests for PathCache | done |
-| 2.4 | Write unit tests for `extractFolderId` and `normalizePath` | pending |
+| 2.4 | Write unit tests for `extractFolderId` and `normalizePath` | done |
 | 2.5 | Write unit tests for DriveClient | pending |
 | 2.6 | Write unit tests for conflict detection in `writeFile` | pending |
 
