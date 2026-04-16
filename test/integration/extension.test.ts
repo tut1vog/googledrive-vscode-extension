@@ -4,6 +4,14 @@ import * as vscode from 'vscode';
 const EXTENSION_ID = 'Tutivog.googledrive-vscode-extension';
 
 suite('Extension Smoke Test', () => {
+    suiteSetup(async () => {
+        const ext = vscode.extensions.getExtension(EXTENSION_ID);
+        assert.ok(ext, 'Extension should exist');
+        if (!ext!.isActive) {
+            await ext!.activate();
+        }
+    });
+
     test('Extension should be present', () => {
         const ext = vscode.extensions.getExtension(EXTENSION_ID);
         assert.ok(ext, 'Extension should be found by its ID');
@@ -31,6 +39,11 @@ suite('All gdrive commands registered', () => {
     let registeredCommands: string[];
 
     suiteSetup(async () => {
+        const ext = vscode.extensions.getExtension(EXTENSION_ID);
+        assert.ok(ext, 'Extension should exist');
+        if (!ext!.isActive) {
+            await ext!.activate();
+        }
         registeredCommands = await vscode.commands.getCommands(true);
     });
 

@@ -45,7 +45,7 @@ Current task: none — all tasks done
 | 4.1 | Add GitHub Actions CI workflow | done |
 
 ### Phase 5: TreeView Browsing
-> Replace workspace-folder mounting with a sidebar TreeView so users can browse Google Drive without creating a multi-root workspace. The existing FileSystemProvider stays for file I/O — the TreeView is the browsing layer on top.
+> Replace workspace-folder mounting with a sidebar TreeView so users can browse Google Drive without creating a multi-root workspace.
 
 | ID | Task | Status |
 |----|------|--------|
@@ -56,6 +56,13 @@ Current task: none — all tasks done
 | 5.5 | Write unit tests for DriveTreeDataProvider | done |
 | 5.6 | Update integration tests for TreeView commands | done |
 | 5.7 | Update documentation (README, architecture, features) | done |
+
+### Phase 6: CI Fixes
+> Fix the two CI failures: vitest 4.x requires Node 20+ (drop Node 18 from matrix), and integration tests need explicit extension activation before checking commands.
+
+| ID | Task | Status |
+|----|------|--------|
+| 6.1 | Fix CI unit test and integration test failures | done |
 
 ---
 
