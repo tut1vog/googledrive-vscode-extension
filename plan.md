@@ -2,7 +2,7 @@
 
 ## Status
 Current phase: Phase 3: Integration Testing
-Current task: 3.1 — Install @vscode/test-electron and scaffold integration test runner
+Current task: 3.2 — Write integration tests for file operations
 
 ---
 
@@ -34,7 +34,7 @@ Current task: 3.1 — Install @vscode/test-electron and scaffold integration tes
 
 | ID | Task | Status |
 |----|------|--------|
-| 3.1 | Install `@vscode/test-electron` and scaffold integration test runner | pending |
+| 3.1 | Install `@vscode/test-electron` and scaffold integration test runner | done |
 | 3.2 | Write integration tests for file operations | pending |
 
 ### Phase 4: CI Pipeline
@@ -48,32 +48,22 @@ Current task: 3.1 — Install @vscode/test-electron and scaffold integration tes
 
 ## Current Task
 
-**ID**: 3.1
-**Title**: Install @vscode/test-electron and scaffold integration test runner
+**ID**: 3.2
+**Title**: Write integration tests for file operations
 **Phase**: Integration Testing
 **Status**: pending
 
 ### Goal
-Set up the integration test infrastructure using @vscode/test-electron so tests can run inside a real VS Code instance.
+Write integration tests that verify extension activation, command registration, and FileSystemProvider registration inside a real VS Code instance.
 
 ### Context
-- No integration test setup exists.
-- @vscode/test-electron downloads a VS Code instance and launches it with the extension loaded.
-- Requires a test runner entry point and a launch configuration.
-- Test files go in `test/integration/` per testing conventions.
-- This is a headless CI environment — need `--disable-gpu` and `xvfb-run` or similar for display server.
-
-### Implementation Steps
-1. Install `@vscode/test-electron` and `@types/mocha`, `mocha`, `glob` as devDependencies.
-2. Create `test/integration/index.ts` — mocha-based test runner entry point.
-3. Create `test/integration/runTests.ts` — downloads VS Code and runs tests.
-4. Create a minimal smoke test `test/integration/extension.test.ts`.
-5. Add tsconfig for test compilation.
-6. Add `"test"` script to package.json pointing to the integration runner.
+- Integration test infrastructure is set up: mocha runner, VS Code launcher, smoke test exists.
+- Since we can't authenticate with Google Drive in CI, tests focus on: extension activation, command registration, scheme registration, error handling for unauthenticated operations.
+- This is a headless environment — tests may not run here but should compile and be ready.
 
 ### Verification
-- [ ] Integration test runner compiles
-- [ ] `npm test` launches (may fail in headless env but should not crash on setup)
+- [ ] `npm run pretest` compiles all integration tests
+- [ ] Test file covers extension activation, command registration, scheme registration
 
 ### Suggested Agent
-general-purpose — test infrastructure setup
+general-purpose — integration test authoring
