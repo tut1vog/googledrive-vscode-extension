@@ -64,6 +64,14 @@ Current task: none — all tasks done
 |----|------|--------|
 | 6.1 | Fix CI unit test and integration test failures | done |
 
+### Phase 7: Icon Improvements
+> Fix both icon issues: activity bar icon renders as black square (needs monochrome SVG), and marketplace icon has an unwanted black background (needs transparent PNG).
+
+| ID | Task | Status |
+|----|------|--------|
+| 7.1 | Create monochrome SVG icon and update package.json | done |
+| 7.2 | Remove black background from marketplace icon.png | done |
+
 ---
 
 ## Current Task

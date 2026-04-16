@@ -26,7 +26,7 @@
         {
           "id": "gdriveContainer",
           "title": "Google Drive",
-          "icon": "images/icon.png"
+          "icon": "images/icon.svg"
         }
       ]
     },
@@ -35,7 +35,7 @@
         {
           "id": "gdriveExplorer",
           "name": "Files",
-          "icon": "images/icon.png"
+          "icon": "images/icon.svg"
         }
       ]
     },
