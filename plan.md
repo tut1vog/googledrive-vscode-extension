@@ -1,8 +1,8 @@
 # Plan
 
 ## Status
-Current phase: Phase 4: CI Pipeline
-Current task: 4.1 — Add GitHub Actions CI workflow
+Current phase: Complete
+Current task: none — all tasks done
 
 ---
 
@@ -42,32 +42,10 @@ Current task: 4.1 — Add GitHub Actions CI workflow
 
 | ID | Task | Status |
 |----|------|--------|
-| 4.1 | Add GitHub Actions CI workflow | pending |
+| 4.1 | Add GitHub Actions CI workflow | done |
 
 ---
 
 ## Current Task
 
-**ID**: 4.1
-**Title**: Add GitHub Actions CI workflow
-**Phase**: CI Pipeline
-**Status**: pending
-
-### Goal
-Add a GitHub Actions workflow that runs lint, build, and unit tests on every push and PR.
-
-### Context
-- Lint: `npm run lint` (eslint, currently has 4 non-formatting errors)
-- Build: `npm run compile` (tsc)
-- Unit tests: `npm run test:unit` (vitest, 69 tests)
-- Integration tests: `npm test` (requires VS Code + display server — needs xvfb-run)
-- Node.js version: should test on 18.x and 20.x
-- No `.github/` directory exists yet
-
-### Verification
-- [ ] `.github/workflows/ci.yml` exists with valid YAML
-- [ ] Workflow triggers on push and pull_request
-- [ ] Jobs include: lint, build, unit test, integration test (with xvfb-run)
-
-### Suggested Agent
-general-purpose — CI workflow creation
+All tasks complete. See git log for task-level details.
