@@ -1,8 +1,8 @@
 # Plan
 
 ## Status
-Current phase: Phase 8: Release Pipeline
-Current task: 8.1 — Add GitHub Actions release workflow
+Current phase: Complete
+Current task: none — all tasks done
 
 ---
 
@@ -77,50 +77,11 @@ Current task: 8.1 — Add GitHub Actions release workflow
 
 | ID | Task | Status |
 |----|------|--------|
-| 8.1 | Add GitHub Actions release workflow | in-progress |
-| 8.2 | Update CLAUDE.md with release publishing instructions | pending |
+| 8.1 | Add GitHub Actions release workflow | done |
+| 8.2 | Update CLAUDE.md with release publishing instructions | done |
 
 ---
 
 ## Current Task
 
-**ID**: 8.1
-**Title**: Add GitHub Actions release workflow
-**Phase**: Release Pipeline
-**Status**: in-progress
-
-### Goal
-Create a GitHub Actions workflow that triggers on `v*` tags, runs lint + build + tests, packages the extension as a `.vsix`, publishes it to the VS Code Marketplace, and creates a GitHub Release with the `.vsix` attached.
-
-### Context
-- Existing CI workflow: `.github/workflows/ci.yml` — runs lint, build, unit tests, integration tests on push/PR to main.
-- `@vscode/vsce` is already in devDependencies (`^2.23.0`) — used for packaging and publishing.
-- `package.json` already has `"vscode:prepublish": "npm run bundle"` script.
-- Publisher is `"Tutivog"` in `package.json`.
-- The user will manually bump `version` in `package.json` and push a `v*` tag to trigger the release.
-- The PAT will be stored as GitHub secret `VSCE_PAT`.
-- The new workflow file should be `.github/workflows/release.yml`.
-
-### Implementation Steps
-1. Create `.github/workflows/release.yml` with:
-   - Trigger: `on: push: tags: ['v*']`
-   - Job 1 (`quality`): Run lint, build, unit tests, integration tests (reuse the same steps from `ci.yml`).
-   - Job 2 (`release`): Depends on `quality`. Steps:
-     a. Checkout, setup Node 20, `npm ci`
-     b. Run `npx vsce package` to produce a `.vsix` file
-     c. Run `npx vsce publish` using `VSCE_PAT` secret
-     d. Extract version from tag (`${{ github.ref_name }}`)
-     e. Create a GitHub Release using `gh release create` or `softprops/action-gh-release@v2` with the `.vsix` as an asset
-2. Use `permissions: contents: write` for the release job so it can create GitHub Releases.
-
-### Verification
-- [ ] File `.github/workflows/release.yml` exists and is valid YAML
-- [ ] Workflow triggers only on `v*` tags (not on push to branches)
-- [ ] Quality job runs lint, build, unit tests, and integration tests
-- [ ] Release job depends on quality job passing
-- [ ] `vsce package` and `vsce publish` commands are present with correct PAT usage
-- [ ] GitHub Release creation step is present with `.vsix` as an attached asset
-- [ ] No secrets are leaked (PAT accessed only via `${{ secrets.VSCE_PAT }}`)
-
-### Suggested Agent
-general-purpose — straightforward workflow file creation with well-known GitHub Actions patterns
+All tasks complete. See git log for task-level details.

@@ -36,6 +36,15 @@ images/                       # Extension icon
 - Watch: `npm run watch`
 - Manual test: Press F5 in VS Code to launch Extension Development Host
 
+## Publishing a Release
+1. Bump `version` in `package.json` (e.g. `0.1.5` → `0.2.0`)
+2. Commit: `git commit -am "chore: bump version to 0.2.0"`
+3. Tag: `git tag v0.2.0`
+4. Push: `git push origin main --tags`
+5. The `release.yml` workflow runs automatically: lint → build → tests → `vsce package` → `vsce publish` → GitHub Release with `.vsix`
+- **Requires**: `VSCE_PAT` secret in GitHub repo settings (VS Marketplace Personal Access Token with Marketplace > Manage scope)
+- **Workflow file**: `.github/workflows/release.yml`
+
 ## Rules (load on demand)
 Each rule file below is a focused behavioral contract. Read a rule file when its trigger matches your task — do not auto-load.
 
