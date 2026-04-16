@@ -1,8 +1,8 @@
 # Plan
 
 ## Status
-Current phase: Phase 3: Integration Testing
-Current task: 3.2 — Write integration tests for file operations
+Current phase: Phase 4: CI Pipeline
+Current task: 4.1 — Add GitHub Actions CI workflow
 
 ---
 
@@ -35,7 +35,7 @@ Current task: 3.2 — Write integration tests for file operations
 | ID | Task | Status |
 |----|------|--------|
 | 3.1 | Install `@vscode/test-electron` and scaffold integration test runner | done |
-| 3.2 | Write integration tests for file operations | pending |
+| 3.2 | Write integration tests for file operations | done |
 
 ### Phase 4: CI Pipeline
 > Add GitHub Actions to run lint, build, and test on every push and PR.
@@ -48,22 +48,26 @@ Current task: 3.2 — Write integration tests for file operations
 
 ## Current Task
 
-**ID**: 3.2
-**Title**: Write integration tests for file operations
-**Phase**: Integration Testing
+**ID**: 4.1
+**Title**: Add GitHub Actions CI workflow
+**Phase**: CI Pipeline
 **Status**: pending
 
 ### Goal
-Write integration tests that verify extension activation, command registration, and FileSystemProvider registration inside a real VS Code instance.
+Add a GitHub Actions workflow that runs lint, build, and unit tests on every push and PR.
 
 ### Context
-- Integration test infrastructure is set up: mocha runner, VS Code launcher, smoke test exists.
-- Since we can't authenticate with Google Drive in CI, tests focus on: extension activation, command registration, scheme registration, error handling for unauthenticated operations.
-- This is a headless environment — tests may not run here but should compile and be ready.
+- Lint: `npm run lint` (eslint, currently has 4 non-formatting errors)
+- Build: `npm run compile` (tsc)
+- Unit tests: `npm run test:unit` (vitest, 69 tests)
+- Integration tests: `npm test` (requires VS Code + display server — needs xvfb-run)
+- Node.js version: should test on 18.x and 20.x
+- No `.github/` directory exists yet
 
 ### Verification
-- [ ] `npm run pretest` compiles all integration tests
-- [ ] Test file covers extension activation, command registration, scheme registration
+- [ ] `.github/workflows/ci.yml` exists with valid YAML
+- [ ] Workflow triggers on push and pull_request
+- [ ] Jobs include: lint, build, unit test, integration test (with xvfb-run)
 
 ### Suggested Agent
-general-purpose — integration test authoring
+general-purpose — CI workflow creation
