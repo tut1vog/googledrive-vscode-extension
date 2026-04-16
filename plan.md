@@ -1,8 +1,8 @@
 # Plan
 
 ## Status
-Current phase: Phase 2: Unit Testing with Vitest
-Current task: 2.6 — Write unit tests for conflict detection in writeFile
+Current phase: Phase 3: Integration Testing
+Current task: 3.1 — Install @vscode/test-electron and scaffold integration test runner
 
 ---
 
@@ -27,7 +27,7 @@ Current task: 2.6 — Write unit tests for conflict detection in writeFile
 | 2.3 | Write unit tests for PathCache | done |
 | 2.4 | Write unit tests for `extractFolderId` and `normalizePath` | done |
 | 2.5 | Write unit tests for DriveClient | done |
-| 2.6 | Write unit tests for conflict detection in `writeFile` | pending |
+| 2.6 | Write unit tests for conflict detection in `writeFile` | done |
 
 ### Phase 3: Integration Testing
 > Add `@vscode/test-electron` for tests that require a running VS Code instance.
@@ -48,27 +48,32 @@ Current task: 2.6 — Write unit tests for conflict detection in writeFile
 
 ## Current Task
 
-**ID**: 2.6
-**Title**: Write unit tests for conflict detection in writeFile
-**Phase**: Unit Testing with Vitest
+**ID**: 3.1
+**Title**: Install @vscode/test-electron and scaffold integration test runner
+**Phase**: Integration Testing
 **Status**: pending
 
 ### Goal
-Test the conflict detection logic in GoogleDriveFileSystemProvider.writeFile — the most complex behavioral logic in the extension.
+Set up the integration test infrastructure using @vscode/test-electron so tests can run inside a real VS Code instance.
 
 ### Context
-- Conflict detection is in `src/file-system-provider.ts` within `GoogleDriveFileSystemProvider.writeFile()`.
-- The provider tracks `fileOpenTimes` (path → modifiedTime when file was last read) and `conflictedFiles` (set of paths with known conflicts).
-- On writeFile, if the file was opened and the remote modifiedTime is newer than the open time, it's a conflict.
-- `lastSaveReason` distinguishes auto-save (AfterDelay) from manual save (Manual/FocusOut).
-- Auto-save with conflict: silently skip write, keep dirty dot.
-- Manual save with conflict: prompt user with "Overwrite" / "Discard" options.
-- Read the full writeFile method and conflict detection logic carefully.
-- This test needs to instantiate GoogleDriveFileSystemProvider and mock its DriveClient.
+- No integration test setup exists.
+- @vscode/test-electron downloads a VS Code instance and launches it with the extension loaded.
+- Requires a test runner entry point and a launch configuration.
+- Test files go in `test/integration/` per testing conventions.
+- This is a headless CI environment — need `--disable-gpu` and `xvfb-run` or similar for display server.
+
+### Implementation Steps
+1. Install `@vscode/test-electron` and `@types/mocha`, `mocha`, `glob` as devDependencies.
+2. Create `test/integration/index.ts` — mocha-based test runner entry point.
+3. Create `test/integration/runTests.ts` — downloads VS Code and runs tests.
+4. Create a minimal smoke test `test/integration/extension.test.ts`.
+5. Add tsconfig for test compilation.
+6. Add `"test"` script to package.json pointing to the integration runner.
 
 ### Verification
-- [ ] `npx vitest run` passes all tests
-- [ ] At least 6 test cases covering: no conflict write, auto-save conflict skip, manual save conflict prompt, overwrite on conflict, discard on conflict, new file creation
+- [ ] Integration test runner compiles
+- [ ] `npm test` launches (may fail in headless env but should not crash on setup)
 
 ### Suggested Agent
-general-purpose — complex test authoring
+general-purpose — test infrastructure setup
