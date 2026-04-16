@@ -2,7 +2,7 @@
 
 ## Status
 Current phase: Phase 5: TreeView Browsing
-Current task: 5.4 — Remove workspace-folder mounting from extension.ts
+Current task: 5.5 — Write unit tests for DriveTreeDataProvider
 
 ---
 
@@ -52,7 +52,7 @@ Current task: 5.4 — Remove workspace-folder mounting from extension.ts
 | 5.1 | Create DriveTreeDataProvider | done |
 | 5.2 | Register TreeView in package.json and extension.ts | done |
 | 5.3 | Add TreeView context menu actions (create, delete, rename, refresh) | done |
-| 5.4 | Remove workspace-folder mounting from extension.ts | pending |
+| 5.4 | Remove workspace-folder mounting from extension.ts | done |
 | 5.5 | Write unit tests for DriveTreeDataProvider | pending |
 | 5.6 | Update integration tests for TreeView commands | pending |
 | 5.7 | Update documentation (README, architecture, features) | pending |
@@ -61,24 +61,22 @@ Current task: 5.4 — Remove workspace-folder mounting from extension.ts
 
 ## Current Task
 
-**ID**: 5.3
-**Title**: Add TreeView context menu actions
+**ID**: 5.5
+**Title**: Write unit tests for DriveTreeDataProvider
 **Phase**: TreeView Browsing
 **Status**: pending
 
 ### Goal
-Add right-click context menu actions on tree items: New File, New Folder, Delete, Rename, Refresh folder. These call the existing DriveClient methods.
+Test DriveTreeDataProvider: getChildren (root, nested, empty, no client), DriveTreeItem properties, sorting, refresh.
 
 ### Context
-- `package.json` needs `menus.view/item/context` entries with `when` clauses based on `contextValue` (driveFolder, driveFile, driveGoogleDoc).
-- Command handlers in `extension.ts` need access to both `treeProvider` and `DriveClient`.
-- The `DriveTreeItem` has `fileInfo` (with `id`, `name`) and `path`.
-- After mutations, call `treeProvider.refresh()` to reload the tree.
+- `src/drive-tree.ts` exports `DriveTreeDataProvider` and `DriveTreeItem`.
+- Needs mock DriveClient with `listChildren` returning DriveFileInfo arrays.
+- Test file: `test/unit/drive-tree.test.ts`.
 
 ### Verification
-- [ ] `npm run compile` succeeds
-- [ ] Context menu commands registered in package.json and extension.ts
-- [ ] New File and New Folder appear on folders; Delete and Rename appear on files and folders
+- [ ] `npx vitest run` passes all tests
+- [ ] At least 10 test cases
 
 ### Suggested Agent
-general-purpose — package.json menus + command handlers
+general-purpose — unit test authoring

@@ -64,12 +64,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             await context.globalState.update('gdrive.rootFolderId', undefined);
             await context.globalState.update('gdrive.rootFolderName', undefined);
 
-            // Remove the gdrive:/ workspace folder from Explorer
-            const gdriveIdx = vscode.workspace.workspaceFolders?.findIndex((f) => f.uri.scheme === 'gdrive');
-            if (gdriveIdx !== undefined && gdriveIdx >= 0) {
-                vscode.workspace.updateWorkspaceFolders(gdriveIdx, 1);
-            }
-
             vscode.window.showInformationMessage('Google Drive: Signed out.');
         } catch (err) {
             logError('Sign out failed', err);
@@ -265,44 +259,6 @@ async function ensureAuthenticated(
     treeProvider.setDriveClient(driveClient);
     vscode.commands.executeCommand('setContext', 'gdrive.isSignedIn', true);
     return driveClient;
-}
-
-async function mountDriveFolder(
-    context: vscode.ExtensionContext,
-    fsProvider: GoogleDriveFileSystemProvider,
-    folderId: string,
-    folderName: string,
-): Promise<void> {
-    fsProvider.setRootFolder(folderId);
-
-    // Persist the mounted folder BEFORE updating workspace folders.
-    // updateWorkspaceFolders can trigger an extension host restart (e.g. when
-    // adding the first workspace folder), so the state must be saved first.
-    await context.globalState.update('gdrive.rootFolderId', folderId);
-    await context.globalState.update('gdrive.rootFolderName', folderName);
-
-    const driveUri = vscode.Uri.parse('gdrive:/');
-    const displayName = folderId === 'root' ? 'Google Drive' : `Google Drive - ${folderName}`;
-
-    // Remove existing gdrive workspace folder if present
-    const existingIdx = vscode.workspace.workspaceFolders?.findIndex((f) => f.uri.scheme === 'gdrive');
-    if (existingIdx !== undefined && existingIdx >= 0) {
-        vscode.workspace.updateWorkspaceFolders(existingIdx, 1, {
-            uri: driveUri,
-            name: displayName,
-        });
-    } else {
-        vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders?.length ?? 0, 0, {
-            uri: driveUri,
-            name: displayName,
-        });
-    }
-
-    // The refresh() in setRootFolder fires before the workspace folder exists
-    // (no-op on first mount). Fire again now that the folder is added.
-    fsProvider.refresh();
-
-    log(`Mounted folder ${folderId} (${folderName})`);
 }
 
 async function restoreSession(
