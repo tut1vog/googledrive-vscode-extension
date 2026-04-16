@@ -1,6 +1,6 @@
 # Google Drive for VS Code
 
-A VS Code extension that mounts Google Drive as a native workspace folder, enabling users to browse, read, write, and manage files directly from the VS Code File Explorer.
+A VS Code extension that integrates Google Drive into VS Code via a sidebar TreeView and FileSystemProvider, enabling users to browse, read, write, and manage files directly from a dedicated Google Drive panel.
 
 ## Stack
 - Language / runtime: TypeScript 5.3 (strict mode), Node.js
@@ -16,6 +16,7 @@ src/
 ├── extension.ts              # Entry point — activation, command registration, session restore
 ├── auth.ts                   # OAuth2 flow, token storage, credential management
 ├── drive-client.ts           # Google Drive API v3 wrapper (DriveClient class)
+├── drive-tree.ts             # TreeView sidebar — DriveTreeDataProvider + DriveTreeItem
 ├── file-system-provider.ts   # vscode.FileSystemProvider + PathCache (path-to-ID mapping)
 ├── drive-picker.ts           # QuickPick-based folder browser UI
 └── logger.ts                 # OutputChannel-based logging utility
@@ -28,7 +29,7 @@ images/                       # Extension icon
 ## Canonical Commands
 - Build: `npm run compile`
 - Bundle: `npm run bundle`
-- Test (unit): `npm run test:unit` (vitest — 69 tests)
+- Test (unit): `npm run test:unit` (vitest — 88 tests)
 - Test (integration): `npm test` (requires VS Code + display server; use `xvfb-run -a npm test` in CI)
 - Lint: `npm run lint` (ESLint 10 flat config + Prettier)
 - Format: `npm run format` (Prettier — write) / `npm run format:check` (check only)

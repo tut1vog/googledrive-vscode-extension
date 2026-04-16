@@ -1,8 +1,8 @@
 # Plan
 
 ## Status
-Current phase: Phase 5: TreeView Browsing
-Current task: 5.7 — Update documentation
+Current phase: Complete
+Current task: none — all tasks done
 
 ---
 
@@ -55,23 +55,10 @@ Current task: 5.7 — Update documentation
 | 5.4 | Remove workspace-folder mounting from extension.ts | done |
 | 5.5 | Write unit tests for DriveTreeDataProvider | done |
 | 5.6 | Update integration tests for TreeView commands | done |
-| 5.7 | Update documentation (README, architecture, features) | pending |
+| 5.7 | Update documentation (README, architecture, features) | done |
 
 ---
 
 ## Current Task
 
-**ID**: 5.6
-**Title**: Update integration tests for TreeView commands
-**Phase**: TreeView Browsing
-**Status**: pending
-
-### Goal
-Update integration tests to verify the new TreeView commands and remove expectations about workspace-folder mounting.
-
-### Verification
-- [ ] `npm run pretest` compiles
-- [ ] Tests cover new commands (gdrive.refreshTree, gdrive.newFile, etc.)
-
-### Suggested Agent
-general-purpose — integration test update
+All tasks complete. See git log for task-level details.

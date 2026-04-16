@@ -2,7 +2,7 @@
 
 ## Overview
 
-Google Drive for VS Code is a VS Code extension that mounts Google Drive as a native workspace folder using the `vscode.FileSystemProvider` API. Files appear in the standard VS Code Explorer under the `gdrive:/` URI scheme, enabling seamless read, write, and browse operations against Google Drive.
+Google Drive for VS Code is a VS Code extension that integrates Google Drive into VS Code via a sidebar TreeView and `vscode.FileSystemProvider` API. Files are browsed in a dedicated Google Drive panel in the activity bar and opened under the `gdrive:/` URI scheme for seamless read, write, and edit operations — no workspace-folder creation required.
 
 ## Module Map
 
@@ -11,6 +11,7 @@ src/
 ├── extension.ts              # Entry point — activation, command registration, session restore
 ├── auth.ts                   # OAuth2 flow, token storage, credential management
 ├── drive-client.ts           # Google Drive API v3 wrapper
+├── drive-tree.ts             # TreeView sidebar — DriveTreeDataProvider + DriveTreeItem
 ├── file-system-provider.ts   # vscode.FileSystemProvider implementation + path cache
 ├── drive-picker.ts           # QuickPick-based folder browser UI
 └── logger.ts                 # OutputChannel-based logging utility
@@ -19,11 +20,18 @@ src/
 ## Component Responsibilities
 
 ### `extension.ts`
-- Registers the `gdrive:/` file system provider with VS Code.
-- Registers four commands: `gdrive.signIn`, `gdrive.signOut`, `gdrive.openDrive`, `gdrive.openDriveRoot`.
-- Restores the previous session (auth + mounted folder) on activation so the workspace is ready before VS Code queries the provider.
-- Manages workspace folder entries (add/replace the `gdrive:/` folder in the multi-root workspace).
+- Registers the `gdrive:/` file system provider and the sidebar TreeView with VS Code.
+- Registers nine commands: `gdrive.signIn`, `gdrive.signOut`, `gdrive.openDrive`, `gdrive.openDriveRoot`, `gdrive.refreshTree`, `gdrive.newFile`, `gdrive.newFolder`, `gdrive.delete`, `gdrive.rename`.
+- Restores the previous session (auth + root folder) on activation so the TreeView is ready immediately.
+- Sets the `gdrive.isSignedIn` context key to control the welcome view.
 - Wires all disposables into `context.subscriptions`.
+
+### `drive-tree.ts` — `DriveTreeDataProvider` + `DriveTreeItem`
+- Implements `vscode.TreeDataProvider` to show Drive files in a sidebar panel.
+- `DriveTreeItem` extends `vscode.TreeItem` with `fileInfo` (DriveFileInfo) and `path` properties.
+- Folders show a folder icon, files show size and open via `gdrive:/` URI on click, Google Docs show a link icon and open in the browser.
+- Children are sorted folders-first, then alphabetically (case-insensitive).
+- `setDriveClient()`, `setRootFolder()`, and `refresh()` control the tree's data source.
 
 ### `auth.ts` — `AuthManager`
 - Implements the OAuth2 "installed app" flow: opens the browser, spins up a local HTTP server on port `39587` to catch the redirect, exchanges the auth code for tokens.
@@ -50,7 +58,7 @@ src/
 ### `drive-picker.ts` — `pickDriveFolder`
 - Provides an interactive QuickPick UI for browsing the Drive folder hierarchy.
 - Supports navigation (into subfolders, back to parent), selecting the current folder, and opening a folder by URL or raw ID.
-- Returns a `{ id, name, path }` selection that `extension.ts` uses to mount the folder.
+- Returns a `{ id, name, path }` selection that `extension.ts` uses to set the TreeView root folder.
 
 ### `logger.ts`
 - Creates and manages a `vscode.OutputChannel` named "Google Drive".
@@ -68,7 +76,7 @@ User triggers "Sign In"
   → Local HTTP server catches redirect with auth code
   → Exchanges code for access + refresh tokens
   → Stores tokens in SecretStorage
-  → Creates DriveClient and hands it to FileSystemProvider
+  → Creates DriveClient and hands it to FileSystemProvider + TreeDataProvider
 ```
 
 ### File Read Flow
@@ -124,9 +132,9 @@ Cache invalidation cascades to all children (prefix-based deletion) and clears p
 ## Extension Lifecycle
 
 1. **Activation**: Triggered by `onFileSystem:gdrive` (when VS Code encounters a `gdrive:/` URI).
-2. **Session Restore**: Before registering the provider, attempts to restore saved OAuth tokens and the previously mounted folder ID from `globalState`.
-3. **Provider Registration**: Registers the file system provider for the `gdrive` scheme.
-4. **Command Registration**: Registers all four commands.
+2. **Session Restore**: Before registering providers, attempts to restore saved OAuth tokens and the previously selected folder from `globalState`. Sets up both TreeDataProvider and FileSystemProvider.
+3. **Provider Registration**: Registers the FileSystemProvider for `gdrive` scheme and creates the TreeView for the sidebar.
+4. **Command Registration**: Registers all nine commands (auth, navigation, tree actions).
 5. **Deactivation**: Disposes the logger output channel.
 
 ## Technology Stack
