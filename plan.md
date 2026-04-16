@@ -2,7 +2,7 @@
 
 ## Status
 Current phase: Phase 5: TreeView Browsing
-Current task: 5.5 — Write unit tests for DriveTreeDataProvider
+Current task: 5.6 — Update integration tests for TreeView commands
 
 ---
 
@@ -53,7 +53,7 @@ Current task: 5.5 — Write unit tests for DriveTreeDataProvider
 | 5.2 | Register TreeView in package.json and extension.ts | done |
 | 5.3 | Add TreeView context menu actions (create, delete, rename, refresh) | done |
 | 5.4 | Remove workspace-folder mounting from extension.ts | done |
-| 5.5 | Write unit tests for DriveTreeDataProvider | pending |
+| 5.5 | Write unit tests for DriveTreeDataProvider | done |
 | 5.6 | Update integration tests for TreeView commands | pending |
 | 5.7 | Update documentation (README, architecture, features) | pending |
 
@@ -61,22 +61,17 @@ Current task: 5.5 — Write unit tests for DriveTreeDataProvider
 
 ## Current Task
 
-**ID**: 5.5
-**Title**: Write unit tests for DriveTreeDataProvider
+**ID**: 5.6
+**Title**: Update integration tests for TreeView commands
 **Phase**: TreeView Browsing
 **Status**: pending
 
 ### Goal
-Test DriveTreeDataProvider: getChildren (root, nested, empty, no client), DriveTreeItem properties, sorting, refresh.
-
-### Context
-- `src/drive-tree.ts` exports `DriveTreeDataProvider` and `DriveTreeItem`.
-- Needs mock DriveClient with `listChildren` returning DriveFileInfo arrays.
-- Test file: `test/unit/drive-tree.test.ts`.
+Update integration tests to verify the new TreeView commands and remove expectations about workspace-folder mounting.
 
 ### Verification
-- [ ] `npx vitest run` passes all tests
-- [ ] At least 10 test cases
+- [ ] `npm run pretest` compiles
+- [ ] Tests cover new commands (gdrive.refreshTree, gdrive.newFile, etc.)
 
 ### Suggested Agent
-general-purpose — unit test authoring
+general-purpose — integration test update

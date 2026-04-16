@@ -149,6 +149,40 @@ export enum ProgressLocation {
     Notification = 15,
 }
 
+export enum TreeItemCollapsibleState {
+    None = 0,
+    Collapsed = 1,
+    Expanded = 2,
+}
+
+// ---------------------------------------------------------------------------
+// ThemeIcon
+// ---------------------------------------------------------------------------
+export class ThemeIcon {
+    readonly id: string;
+    constructor(id: string) {
+        this.id = id;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// TreeItem
+// ---------------------------------------------------------------------------
+export class TreeItem {
+    label: string;
+    collapsibleState: TreeItemCollapsibleState;
+    description?: string;
+    tooltip?: string;
+    iconPath?: ThemeIcon;
+    contextValue?: string;
+    command?: { command: string; title: string; arguments?: unknown[] };
+
+    constructor(label: string, collapsibleState: TreeItemCollapsibleState = TreeItemCollapsibleState.None) {
+        this.label = label;
+        this.collapsibleState = collapsibleState;
+    }
+}
+
 // ---------------------------------------------------------------------------
 // EventEmitter
 // ---------------------------------------------------------------------------
