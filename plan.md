@@ -2,7 +2,7 @@
 
 ## Status
 Current phase: Phase 2: Unit Testing with Vitest
-Current task: 2.3 — Write unit tests for PathCache
+Current task: 2.4 — Write unit tests for extractFolderId and normalizePath
 
 ---
 
@@ -24,7 +24,7 @@ Current task: 2.3 — Write unit tests for PathCache
 |----|------|--------|
 | 2.1 | Install vitest and scaffold test infrastructure | done |
 | 2.2 | Export PathCache for independent testing | done |
-| 2.3 | Write unit tests for PathCache | pending |
+| 2.3 | Write unit tests for PathCache | done |
 | 2.4 | Write unit tests for `extractFolderId` and `normalizePath` | pending |
 | 2.5 | Write unit tests for DriveClient | pending |
 | 2.6 | Write unit tests for conflict detection in `writeFile` | pending |
@@ -48,44 +48,42 @@ Current task: 2.3 — Write unit tests for PathCache
 
 ## Current Task
 
-**ID**: 2.3
-**Title**: Write unit tests for PathCache
+**ID**: 2.4
+**Title**: Write unit tests for extractFolderId and normalizePath
 **Phase**: Unit Testing with Vitest
 **Status**: pending
 
 ### Goal
-Thoroughly test PathCache — the class that bridges VS Code's hierarchical paths with Drive's flat ID model. This is the highest-value test target.
+Test the two utility functions: `extractFolderId` (URL/ID parsing) and `normalizePath` (path normalization).
 
 ### Context
-- `PathCache` is exported from `src/file-system-provider.ts`. Constructor takes optional `rootId` (defaults to `'root'`).
-- It also imports `DriveFileInfo` from `src/drive-client.ts` — tests need to create mock `DriveFileInfo` objects.
-- `DriveFileInfo` interface: `{ id: string, name: string, mimeType: string, isFolder: boolean, size: number, modifiedTime: number }` — read `src/drive-client.ts` to confirm exact shape.
-- Test file: `test/unit/path-cache.test.ts` per testing conventions.
-- vscode mock is aliased in `vitest.config.ts` so imports from source files work.
+- `extractFolderId` exported from `src/drive-picker.ts` — but imports `DriveClient` from `drive-client.ts`. Need to check if the import is used by `extractFolderId` itself or just by `pickDriveFolder`.
+- `normalizePath` exported from `src/file-system-provider.ts` — pure function, no dependencies.
+- Test file: `test/unit/drive-picker.test.ts` for extractFolderId, `test/unit/normalize-path.test.ts` for normalizePath (or combine).
+- `googleapis` and `google-auth-library` are already mocked in vitest.config.ts aliases.
 
-### Methods to test
-1. `constructor(rootId?)` — root path '/' maps to rootId
-2. `setEntry(path, info)` / `getId(path)` / `getInfo(path)` — basic set/get
-3. `setDirListing(parentPath, children)` — populates child paths and dir listing
-4. `hasDirListing(parentPath)` — true after setDirListing, false before
-5. `addToDirListing(parentPath, child)` — adds single child
-6. `removeFromDirListing(parentPath, childName)` — removes single child
-7. `entries()` — iterates all path-to-info entries
-8. `invalidatePath(path)` — removes the path, its children, AND the parent's dir listing
-9. `invalidateAll()` — clears everything, preserves root ID
-10. `setRootId(rootId)` — changes root and invalidates all
+### extractFolderId cases
+- Standard folder URL: `https://drive.google.com/drive/folders/abc123`
+- URL with user prefix: `https://drive.google.com/drive/u/0/folders/abc123`
+- URL with query params: `https://drive.google.com/drive/folders/abc123?resourcekey=xyz`
+- Raw folder ID: `abc123_-def`
+- Too-short raw ID (≤5 chars): should return null
+- Invalid input with special chars: should return null
+- Input with leading/trailing whitespace: should trim and still work
+- Empty string: should return null
 
-### Edge cases to cover
-- Invalidating root `/` clears all children
-- Invalidating a deep path clears its subtree but not siblings
-- `invalidateAll` preserves the root ID mapping
-- `setDirListing` on root vs nested paths (child path construction differs)
-- `addToDirListing` when no dir listing exists (should still set the entry)
+### normalizePath cases
+- Normal path: `/docs/file.txt` → unchanged
+- Trailing slash: `/docs/` → `/docs`
+- Double slashes: `//docs//file.txt` → `/docs/file.txt`
+- Root: `/` → `/`
+- No leading slash: `docs/file.txt` → `/docs/file.txt`
+- Empty string: `` → `/`
 
 ### Verification
-- [ ] `npx vitest run test/unit/path-cache.test.ts` passes
-- [ ] At least 15 test cases covering all 10 methods listed above
-- [ ] Edge cases for invalidation are tested (subtree cleared, siblings preserved, root preserved)
+- [ ] `npx vitest run` passes all tests (existing + new)
+- [ ] At least 8 test cases for extractFolderId
+- [ ] At least 5 test cases for normalizePath
 
 ### Suggested Agent
 general-purpose — unit test authoring
